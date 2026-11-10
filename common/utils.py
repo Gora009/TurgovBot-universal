@@ -41,35 +41,6 @@ def is_resource_exhausted_error(e: Exception) -> bool:
     return False
 
 
-async def safe_answer_callback_query(query: CallbackQuery, text: str = None, show_alert: bool = False) -> bool:
-    """
-    Безопасно отвечает на callback query, игнорируя ошибку "Query is too old".
-
-    Args:
-        query: Callback query для ответа
-        text: Текст уведомления (опционально)
-        show_alert: Показывать как alert вместо уведомления
-
-    Returns:
-        True если ответ успешно отправлен, False если произошла ошибка
-    """
-    try:
-        await query.answer(text=text, show_alert=show_alert)
-        return True
-    except BadRequest as e:
-        if "Query is too old" in str(e) or "query id is invalid" in str(e):
-            # Игнорируем ошибку устаревшего query - это нормально
-            logging.debug(f"Callback query устарел (это нормально): {e}")
-            return False
-        else:
-            # Другие BadRequest ошибки логируем
-            logging.warning(f"BadRequest при ответе на callback query: {e}")
-            return False
-    except Exception as e:
-        logging.error(f"Неожиданная ошибка при ответе на callback query: {e}")
-        return False
-
-
 def setup_logging():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)

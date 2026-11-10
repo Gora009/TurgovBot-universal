@@ -35,14 +35,7 @@ from config import (
     GENERATION_HISTORY_PREFIX,
     PROJECTS_CONFIG
 )
-from database.manager import db_manager
 from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
-
-
-# Нужно импортировать функцию сохранения в историю
-async def save_history(chat_id: int, server_id: str, role: str, content: str):
-    query = "INSERT INTO message_history (user_id, server_id, role, content) VALUES ($1, $2, $3, $4);"
-    await db_manager.execute(query, chat_id, server_id, role, content)
 
 
 @rate_limited
