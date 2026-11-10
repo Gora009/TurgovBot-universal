@@ -15,7 +15,7 @@ vip_promo_start), а также deep-link ?start=apply_vip (см. user_handlers/
 Политика повтора (одна активная заявка; повтор после отклонения) — в services.vip_applications.
 
 ⚠️ Одобрение выдаёт users.is_unlimited (ТОЛЬКО безлимит, без оверлея) — хендлеры
-accept/reject в admin_handlers.py.
+accept/reject в admin_handlers/vip_apps.py.
 """
 import html
 import logging

@@ -3,12 +3,12 @@
 """
 Раздел админки бота: обращения в поддержку с сайта (таблица support_tickets).
 
-Самодостаточный модуль — минимум хуков в admin_handlers.py/main.py (Вариант А: без
+Самодостаточный модуль — минимум хуков в admin_handlers/ и main.py (Вариант А: без
 нового FSM-состояния, меню остаётся в CHOOSING_ACTION; закрытие — top-level хендлер по
 паттерну `supp_close_<id>`, как сделано для ВИП-кнопок vip_ok_/vip_no_).
 
 Точки касания живого кода (для деплоя с полным деплоем бота):
-- admin_handlers.py: импорт manage_support_tickets/support_dump + счётчик и кнопка в
+- admin_handlers/ (core.py): импорт manage_support_tickets/support_dump + счётчик и кнопка в
   admin_panel + 2 строки в блоке CHOOSING_ACTION (manage_support / supp_dump);
 - main.py: импорт close_support_ticket + 1 top-level CallbackQueryHandler `^supp_close_\\d+$`.
 """

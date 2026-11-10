@@ -5,7 +5,7 @@
 
 Юзер подаёт анкету через deep-link ?start=apply_tester
 (user_handlers/tester_application_flow.py), супер-/админ отбирает её в админ-панели
-(admin_handlers.py), глядя на метрики активности юзера. Хранилище — таблица
+(admin_handlers/tester_apps.py), глядя на метрики активности юзера. Хранилище — таблица
 tester_applications (alembic 010).
 
 Приём заявок включается/выключается персистентным флагом в system_cache — по тому же

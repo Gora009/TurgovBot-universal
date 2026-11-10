@@ -43,7 +43,7 @@ and article search for a desktop overlay.*
 Основной код:
 
 ```
-main.py, user_handlers/, admin_handlers.py   Telegram-бот
+main.py, user_handlers/, admin_handlers/    Telegram-бот
 api/                                         FastAPI: роутеры, схемы, безопасность
 services/                                    бизнес-логика: QA, поиск законов, каталог,
                                              эмбеддинги, лицензии, документы
