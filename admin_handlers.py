@@ -2876,14 +2876,6 @@ async def cleanup_gdrive_storage(update: Update, context: ContextTypes.DEFAULT_T
     return CHOOSING_ACTION
 
 
-async def cancel_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    context.user_data.clear()
-    await query.edit_message_text("Рассылка отменена.")
-    return await admin_panel(update, context)
-
-
 # === УПРАВЛЕНИЕ REST API ===
 
 def _generate_api_key() -> tuple[str, str, str]:
