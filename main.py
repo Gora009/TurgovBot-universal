@@ -324,7 +324,7 @@ async def post_shutdown(application: Application) -> None:
             logging.warning(f"Шаг 1/3: Ошибка остановки API сервера: {e}")
             try:
                 api_process.kill()
-            except:
+            except Exception:
                 pass
     else:
         logging.info("Шаг 1/3: API сервер не был запущен.")

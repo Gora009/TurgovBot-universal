@@ -254,8 +254,8 @@ async def handle_user_reply_in_report(update: Update, context: ContextTypes.DEFA
     for admin_id in admin_ids:
         try:
             await context.bot.send_message(chat_id=admin_id, text=notification_text, parse_mode='Markdown')
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"[REPORT #{report_id}] Не удалось уведомить админа {admin_id}: {e}")
 
     await _display_main_menu(update, context, is_new_message=True)
     return ConversationHandler.END

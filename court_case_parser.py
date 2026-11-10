@@ -498,9 +498,9 @@ async def _parse_forum_thread(page: Page, thread_url: str) -> Optional[Dict]:
                                 if await spoiler_btn.is_visible():
                                     await spoiler_btn.click(timeout=1000)
                                     await page.wait_for_timeout(50)
-                            except:
+                            except Exception:
                                 pass  # Игнорируем ошибки при клике на отдельные спойлеры
-                except:
+                except Exception:
                     pass  # Игнорируем ошибки при поиске спойлеров в сообщении
                 # >>> КОНЕЦ: ДОПОЛНИТЕЛЬНОЕ РАСКРЫТИЕ СПОЙЛЕРОВ <<<
 
@@ -508,11 +508,11 @@ async def _parse_forum_thread(page: Page, thread_url: str) -> Optional[Dict]:
                 try:
                     # innerText возвращает текст как его видит пользователь (без HTML тегов)
                     text_content = await content_elem.inner_text(timeout=5000)
-                except:
+                except Exception:
                     # Fallback 1: используем textContent
                     try:
                         text_content = await content_elem.text_content(timeout=5000)
-                    except:
+                    except Exception:
                         # Fallback 2: получаем innerHTML и очищаем его
                         html_content = await content_elem.evaluate('el => el.innerHTML', timeout=5000)
                         text_content = _clean_html_to_text(html_content)

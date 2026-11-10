@@ -36,9 +36,9 @@ def clear_pycache():
         if os.path.exists(pycache_dir):
             try:
                 shutil.rmtree(pycache_dir)
-                print(f"[API] Очищен кэш: {pycache_dir}")
+                logger.info(f"[API] Очищен кэш: {pycache_dir}")
             except Exception as e:
-                print(f"[API] Не удалось очистить кэш {pycache_dir}: {e}")
+                logger.warning(f"[API] Не удалось очистить кэш {pycache_dir}: {e}")
 
 # Настройка логирования
 logging.basicConfig(
@@ -74,15 +74,8 @@ def main():
     try:
         from api.schemas import ComplaintDocumentGenerateResponse
         logger.info("[API] ✅ schemas.ComplaintDocumentGenerateResponse успешно импортирован")
-    except Exception as e:
-        import traceback
-        full_traceback = traceback.format_exc()
-        logger.error(f"[API] ❌ Ошибка импорта schemas:\n{full_traceback}")
-        print("=" * 80)
-        print("ПОЛНЫЙ TRACEBACK ОШИБКИ ИМПОРТА:")
-        print("=" * 80)
-        print(full_traceback)
-        print("=" * 80)
+    except Exception:
+        logger.exception("[API] ❌ Ошибка импорта schemas")
         sys.exit(1)
 
     try:
@@ -95,15 +88,8 @@ def main():
             reload=False,  # Отключаем hot reload для production
             workers=1,     # Один воркер для простоты
         )
-    except Exception as e:
-        import traceback
-        full_traceback = traceback.format_exc()
-        logger.error(f"[API] Ошибка запуска сервера:\n{full_traceback}")
-        print("=" * 80)
-        print("ПОЛНЫЙ TRACEBACK ОШИБКИ ЗАПУСКА:")
-        print("=" * 80)
-        print(full_traceback)
-        print("=" * 80)
+    except Exception:
+        logger.exception("[API] Ошибка запуска сервера")
         sys.exit(1)
 
 

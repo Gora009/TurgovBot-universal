@@ -2689,7 +2689,7 @@ async def extract_passport_data_cms(image_url: str) -> Dict:
                     from datetime import datetime
                     parsed = datetime.fromisoformat(dob.replace('/', '-'))
                     dob = parsed.strftime('%Y-%m-%d')
-                except:
+                except Exception:
                     pass
         result['dateOfBirth'] = dob
 

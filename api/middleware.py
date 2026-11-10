@@ -325,8 +325,9 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
                     )
                     if row:
                         api_key_id = row['id']
-                except Exception:
-                    pass  # Don't fail request if key lookup fails
+                except Exception as e:
+                    # Не роняем запрос, если поиск ключа не удался.
+                    logger.debug("API key lookup for audit failed: %s", e)
 
         # Выполняем запрос
         response = None

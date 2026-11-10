@@ -546,7 +546,7 @@ async def get_law_urls_from_section(context, section_url: str) -> list[str]:
                             # КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: закрываем старую страницу и создаём новую
                             try:
                                 await page.close()
-                            except:
+                            except Exception:
                                 pass
                             await asyncio.sleep(5)
                             page = await context.new_page()
@@ -610,7 +610,7 @@ async def get_law_urls_from_section(context, section_url: str) -> list[str]:
         # Закрываем страницу
         try:
             await page.close()
-        except:
+        except Exception:
             pass
 
     logging.info(f"  [Discovery] Сбор завершен. Всего найдено {len(all_urls)} уникальных ссылок.")
@@ -706,7 +706,7 @@ async def scrape_source(context, url: str, thread_creators: dict, parse_only_aut
                     # КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: закрываем старую страницу и создаём новую
                     try:
                         await page.close()
-                    except:
+                    except Exception:
                         pass
                     await asyncio.sleep(5)
                     page = await context.new_page()
@@ -789,7 +789,7 @@ async def scrape_source(context, url: str, thread_creators: dict, parse_only_aut
                             logging.info(f"    -> Пересоздаю страницу и жду 5 сек...")
                             try:
                                 await page.close()
-                            except:
+                            except Exception:
                                 pass
                             await asyncio.sleep(5)
                             page = await context.new_page()
@@ -896,7 +896,7 @@ async def scrape_source(context, url: str, thread_creators: dict, parse_only_aut
         # Закрываем страницу
         try:
             await page.close()
-        except:
+        except Exception:
             pass
 
 

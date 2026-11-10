@@ -276,7 +276,7 @@ async def download_image(image_url: str) -> bytes | None:
             if len(proxy_parts) == 4:
                 host, port, username, password = proxy_parts
                 proxy = f"socks5://{username}:{password}@{host}:{port}"
-    except:
+    except Exception:
         pass
 
     for attempt in range(3):

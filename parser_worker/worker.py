@@ -831,7 +831,7 @@ async def parse_section_urls(section_url: str) -> list[str]:
                                 if attempt < 2:
                                     try:
                                         await page.close()
-                                    except:
+                                    except Exception:
                                         pass
                                     await asyncio.sleep(5)
                                     page = await browser_context.new_page()
@@ -853,7 +853,7 @@ async def parse_section_urls(section_url: str) -> list[str]:
                         # Ждём контент
                         try:
                             await page.wait_for_selector('div.structItem-title a', timeout=20000)
-                        except:
+                        except Exception:
                             await asyncio.sleep(3)
 
                         # Собираем ссылки
@@ -890,7 +890,7 @@ async def parse_section_urls(section_url: str) -> list[str]:
                 finally:
                     try:
                         await page.close()
-                    except:
+                    except Exception:
                         pass
                     stats['active_pages'] -= 1
 
@@ -965,7 +965,7 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
                             if attempt < 2:
                                 try:
                                     await page.close()
-                                except:
+                                except Exception:
                                     pass
                                 await asyncio.sleep(5)
                                 page = await browser_context.new_page()
@@ -990,7 +990,7 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
                     # Ждём заголовок
                     try:
                         await page.wait_for_selector('h1.p-title-value', timeout=20000)
-                    except:
+                    except Exception:
                         await asyncio.sleep(3)
 
                     soup = BeautifulSoup(await page.content(), 'html.parser')
@@ -1052,7 +1052,7 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
                                     if attempt < 2:
                                         try:
                                             await page.close()
-                                        except:
+                                        except Exception:
                                             pass
                                         await asyncio.sleep(5)
                                         page = await browser_context.new_page()
@@ -1146,7 +1146,7 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
                 finally:
                     try:
                         await page.close()
-                    except:
+                    except Exception:
                         pass
                     stats['active_pages'] -= 1
 

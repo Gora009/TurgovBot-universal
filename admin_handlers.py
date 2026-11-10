@@ -2679,8 +2679,8 @@ async def _broadcast_job(context: ContextTypes.DEFAULT_TYPE):
         logging.warning(f"[BROADCAST #{broadcast_id}] Не удалось обновить финальный отчёт: {e}")
         try:
             await bot.send_message(chat_id=admin_chat_id, text=report, parse_mode="HTML")
-        except Exception:
-            pass
+        except Exception as e2:
+            logging.warning(f"[BROADCAST #{broadcast_id}] Финальный отчёт не доставлен админу: {e2}")
 
     logging.info(f"[BROADCAST #{broadcast_id}] {status_text}: delivered={delivered}, failed={failed}, blocked={blocked}")
 
@@ -4665,8 +4665,8 @@ async def _invite_testers_job(bot, group_chat_id, invite_url, tester_ids, status
     except Exception:
         try:
             await bot.send_message(group_chat_id, report, parse_mode="HTML")
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"Отчёт не доставлен в группу {group_chat_id}: {e}")
 
 
 async def manage_tester_applications(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
