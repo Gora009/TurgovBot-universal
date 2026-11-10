@@ -1,4 +1,0 @@
--- DEPRECATED: Эта миграция теперь выполняется через Alembic
--- Используйте: alembic upgrade head
---
--- Файл миграции: alembic/versions/003_add_tester_role_20260118.py

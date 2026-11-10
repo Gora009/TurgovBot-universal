@@ -127,7 +127,6 @@ ProdBot/
 │   ├── models.py           # SQLAlchemy модели (ORM)
 │   ├── migrate.py          # Утилита для управления миграциями
 │   ├── manager.py          # DatabaseManager (asyncpg) - без изменений
-│   └── init_db.py          # Старый скрипт (deprecated)
 ```
 
 ## Важно!
