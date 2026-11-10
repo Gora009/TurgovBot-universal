@@ -221,7 +221,7 @@ async def ask_forum_url(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         f"Отправьте ссылку на тему форума, где указана форма для заполнения "
         f"<b>{context.user_data['complaint_type_name'].lower()}</b>.\n\n"
         f"<i>Примеры:\nhttps://forum.majestic-rp.ru/threads/12345/\nhttps://forum.gta5rp.com/threads/12345/"
-        f"\nhttps://forum.rmrp.ru/threads/12345/\nhttps://forum.russia.online/threads/12345/</i>",
+        f"\nhttps://forum.rmrp.ru/threads/12345/\nhttps://forum.russia.online/threads/12345/\nhttps://forum.nova-rp.com/threads/12345/</i>",
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='HTML'
     )

@@ -465,7 +465,7 @@ async def get_enabled_projects() -> list[str]:
     disabled_project_ids = {record['project_id'] for record in disabled_records}
 
     # Определяем порядок проектов
-    project_order = {'majestic_rp': 1, 'gta5rp': 2, 'rmrp': 3, 'russia_online': 4}
+    project_order = {'majestic_rp': 1, 'gta5rp': 2, 'rmrp': 3, 'russia_online': 4, 'nova_rp': 5}
 
     # Берём проекты из конфига, исключая отключенные
     result = [

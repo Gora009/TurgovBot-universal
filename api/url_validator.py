@@ -23,6 +23,8 @@ ALLOWED_DOMAINS = [
     'rmrp.ru',
     'forum.russia.online',
     'russia.online',
+    'forum.nova-rp.com',
+    'nova-rp.com',
 ]
 
 # Patterns for blocked private/reserved IP ranges

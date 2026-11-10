@@ -258,6 +258,8 @@ async def download_image(image_url: str) -> bytes | None:
         referer_url = 'https://forum.rmrp.ru/'
     elif 'russia.online' in image_url:
         referer_url = 'https://forum.russia.online/'
+    elif 'nova-rp.com' in image_url:
+        referer_url = 'https://forum.nova-rp.com/'
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',

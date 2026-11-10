@@ -448,7 +448,7 @@ async def _parse_forum_thread(page: Page, thread_url: str) -> Optional[Dict]:
 
         # Извлекаем ID темы из URL
         # Пример URL: https://forum.majestic-rp.ru/threads/название.12345/
-        thread_id_match = re.search(r'threads/[^/]+\.(\d+)', thread_url)
+        thread_id_match = re.search(r'threads/(?:[^/?#]+\.)?(\d+)(?:[/?#]|$)', thread_url)
         thread_id = thread_id_match.group(1) if thread_id_match else None
 
         # Извлекаем название темы
@@ -680,7 +680,8 @@ SUPPORTED_FORUMS = [
     'forum.majestic-rp.ru',
     'forum.gta5rp.com',
     'forum.rmrp.ru',
-    'forum.russia.online'
+    'forum.russia.online',
+    'forum.nova-rp.com',
 ]
 
 

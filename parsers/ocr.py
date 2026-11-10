@@ -96,6 +96,8 @@ async def _download_image(image_url: str, retry_count: int = 3, delay_between_im
         referer_url = 'https://forum.rmrp.ru/'
     elif 'russia.online' in image_url:
         referer_url = 'https://forum.russia.online/'
+    elif 'nova-rp.com' in image_url:
+        referer_url = 'https://forum.nova-rp.com/'
 
     # User-Agent для обхода блокировок
     headers = {

@@ -59,6 +59,8 @@ async def extract_passport_data_cms(image_url: str) -> Dict:
             referer_url = 'https://forum.rmrp.ru/'
         elif 'russia.online' in url:
             referer_url = 'https://forum.russia.online/'
+        elif 'nova-rp.com' in url:
+            referer_url = 'https://forum.nova-rp.com/'
 
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

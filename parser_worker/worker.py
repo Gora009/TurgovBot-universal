@@ -348,7 +348,7 @@ def extract_thread_id_from_url(url: str) -> Optional[int]:
     """Извлекает числовой ID темы из URL. Устойчиво к хвостам /unread, /latest, /page-N, /post-N:
     у ЗАЛОГИНЕННОГО парсера непрочитанные темы приходят как .../threads/slug.ID/unread, и прежний
     якорь \\.(\\d+)/?$ их терял → недосбор законов (напр. washington 17/31 → ложное удаление 14)."""
-    match = re.search(r'/threads/[^/?#]*\.(\d+)(?:[/?#]|$)', url)
+    match = re.search(r'/threads/(?:[^/?#]*\.)?(\d+)(?:[/?#]|$)', url)
     if match:
         return int(match.group(1))
     match = re.search(r'\.(\d+)/?$', url)  # запасной вариант (id в конце URL)
@@ -382,7 +382,7 @@ def validated_discovery_thread_urls(
                 f"unrecognised thread URL in discovery: {absolute_url}"
             )
         canonical = re.sub(
-            r'(/threads/[^/?#]*\.\d+).*$',
+            r'(/threads/(?:[^/?#]*\.)?\d+).*$',
             r'\1/',
             absolute_url,
             flags=re.IGNORECASE,

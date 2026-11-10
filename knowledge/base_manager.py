@@ -102,14 +102,15 @@ async def notify_super_admin(message: str, reply_markup: dict | None = None):
 
 def extract_thread_id_from_url(url: str) -> int | None:
     """
-    Извлекает ID только из XenForo-пути /threads/slug.ID.
+    Извлекает ID только из XenForo-пути /threads/slug.ID или /threads/ID
+    (форумы без ЧПУ-ссылок, напр. forum.nova-rp.com).
 
     Устойчиво к query/fragment и хвостам /unread, /latest, /page-N, /post-N.
     Цифры из других URL намеренно не принимаются: ложный thread_id опасен для
     destructive cleanup.
     """
     match = re.search(
-        r'(?:^|/)threads/[^/?#]*\.(\d+)(?:[/?#]|$)',
+        r'(?:^|/)threads/(?:[^/?#]*\.)?(\d+)(?:[/?#]|$)',
         str(url or ''),
         re.IGNORECASE,
     )
@@ -127,7 +128,7 @@ def canonical_thread_url(url: str) -> str | None:
         return None
     parts = urlsplit(raw)
     match = re.search(
-        r'^(.*?/threads/[^/?#]*\.' + re.escape(str(thread_id)) + r')(?:/.*)?$',
+        r'^(.*?/threads/(?:[^/?#]*\.)?' + re.escape(str(thread_id)) + r')(?:/.*)?$',
         parts.path,
         re.IGNORECASE,
     )

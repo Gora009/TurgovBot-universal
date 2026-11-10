@@ -763,7 +763,8 @@ async def prompt_for_case_description(update: Update, context: ContextTypes.DEFA
             "Примеры:\n<code>https://forum.majestic-rp.ru/threads/иск-к-гражданину.12345/</code>\n"
             "<code>https://forum.gta5rp.com/threads/иск-к-гражданину.12345/</code>\n"
             "<code>https://forum.rmrp.ru/threads/иск-к-гражданину.12345/</code>\n"
-            "<code>https://forum.russia.online/threads/иск-к-гражданину.12345/</code>"
+            "<code>https://forum.russia.online/threads/иск-к-гражданину.12345/</code>\n"
+            "<code>https://forum.nova-rp.com/threads/12345/</code>"
         )
     else:
         text = (
@@ -1120,7 +1121,7 @@ async def refresh_court_case(update: Update, context: ContextTypes.DEFAULT_TYPE,
     first_message = case_history[0]['content']
     import re
     url_match = re.search(
-        r'(https?://forum\.(?:majestic-rp\.ru|gta5rp\.com|rmrp\.ru|russia\.online)/threads/[^\s]+)',
+        r'(https?://forum\.(?:majestic-rp\.ru|gta5rp\.com|rmrp\.ru|russia\.online|nova-rp\.com)/threads/[^\s]+)',
         first_message,
     )
 

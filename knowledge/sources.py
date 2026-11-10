@@ -475,6 +475,76 @@ PROJECTS_DATA = {
                 "default_thread_post_override": {"first_n": 1},
             },
         }
+    },
+    "nova_rp": {
+        "display_name": "NOVA RP",
+        "description": "NOVA RP — штат San Andreas",
+        "forum_base_url": "https://forum.nova-rp.com",
+        "logo_file": "logo.png",
+        # XenForo 2 БЕЗ ЧПУ-ссылок: темы имеют вид /threads/412046/ (без slug), разделы —
+        # /forums/1320/. Законодательные разделы открыты гостю, логин не нужен.
+        # Разделы лежат в Правительстве сервера: Государственные организации → Правительство.
+        # Подразделы «Архив документации», «Указы Губернатора», «Постановления Правительства»
+        # в синк не попадают (discovery берёт только темы самой страницы раздела).
+        "servers": {
+            "nova_new_era": {
+                "display_name": "New Era",
+                "forum_section_urls": [
+                    "https://forum.nova-rp.com/forums/1320/"
+                ],
+                "parse_only_author_posts": True,
+                "default_thread_post_override": {"first_n": 1},
+                # 2026-10-31 в раздел выложена новая база («NEW ...», автор Nikita Toretto),
+                # но старые редакции 2025 года остались в том же разделе. Исключаем старые
+                # темы, у которых есть «NEW»-замена, иначе в базе окажутся два разных УК/АК.
+                # Старые законы без NEW-аналога (гос. служба, орг. преступность, частное
+                # предпринимательство, парковки, посещение гос. учреждений, юрисдикция,
+                # документооборот) пока оставлены — проверить, действуют ли они.
+                "excluded_urls": [
+                    "https://forum.nova-rp.com/threads/404080/",  # Конституция → 412038
+                    "https://forum.nova-rp.com/threads/404079/",  # Этический кодекс → 412050
+                    "https://forum.nova-rp.com/threads/404078/",  # Трудовой кодекс → 412048
+                    "https://forum.nova-rp.com/threads/404077/",  # Дорожный кодекс → 412044
+                    "https://forum.nova-rp.com/threads/404076/",  # Судебный кодекс → 412049
+                    "https://forum.nova-rp.com/threads/404075/",  # Процессуальный кодекс → 412042
+                    "https://forum.nova-rp.com/threads/404074/",  # Административный кодекс → 412045
+                    "https://forum.nova-rp.com/threads/404073/",  # Уголовный кодекс → 412046
+                    "https://forum.nova-rp.com/threads/409236/",  # Об охоте → 412068
+                    "https://forum.nova-rp.com/threads/405388/",  # О СМИ → 412085
+                    "https://forum.nova-rp.com/threads/404399/",  # Об адвокатской деятельности → 412057
+                    "https://forum.nova-rp.com/threads/404093/",  # О гос. тайне → 412060
+                    "https://forum.nova-rp.com/threads/404092/",  # Исправительное учреждение → 412078
+                    "https://forum.nova-rp.com/threads/404091/",  # О прокуратуре → 412073
+                    "https://forum.nova-rp.com/threads/404089/",  # О неприкосновенности → 412058
+                    "https://forum.nova-rp.com/threads/404087/",  # Об обороте оружия → 412064
+                    "https://forum.nova-rp.com/threads/404085/",  # О Правительстве → 412041
+                    "https://forum.nova-rp.com/threads/404082/",  # Об особых положениях → 412069
+                    "https://forum.nova-rp.com/threads/404072/",  # NG → 412083
+                    "https://forum.nova-rp.com/threads/404071/",  # LSPD → 412080
+                    "https://forum.nova-rp.com/threads/404070/",  # SAHP → 412082
+                    "https://forum.nova-rp.com/threads/404069/",  # FIB → 412054
+                    "https://forum.nova-rp.com/threads/404068/",  # EMS → 412084
+                    "https://forum.nova-rp.com/threads/404067/",  # USSS → 412077
+                ],
+            },
+            "nova_mirage": {
+                "display_name": "Mirage",
+                "forum_section_urls": [
+                    # Законодательство → Нормативно-правовые акты
+                    "https://forum.nova-rp.com/forums/960/"
+                ],
+                "parse_only_author_posts": True,
+                "default_thread_post_override": {"first_n": 1},
+            },
+            "nova_horizon": {
+                "display_name": "Horizon",
+                "forum_section_urls": [
+                    "https://forum.nova-rp.com/forums/1478/"
+                ],
+                "parse_only_author_posts": True,
+                "default_thread_post_override": {"first_n": 1},
+            },
+        }
     }
 }
 
