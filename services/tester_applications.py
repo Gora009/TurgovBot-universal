@@ -1,5 +1,3 @@
-# START OF FILE services/tester_applications.py
-
 """
 Заявки в тестировщики.
 
@@ -307,6 +305,3 @@ def format_metrics_block(m: Dict[str, Any]) -> str:
         f"Уголовных дел: <b>{m.get('criminal_cases', 0)}</b>",
         f"Репортов: <b>{m.get('reports', 0)}</b>",
     ])
-
-
-# END OF FILE services/tester_applications.py

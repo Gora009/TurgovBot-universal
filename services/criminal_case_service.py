@@ -1,5 +1,3 @@
-# START OF FILE services/criminal_case_service.py
-
 """
 Сервис для создания уголовных дел (Criminal Case Writer).
 
@@ -21,8 +19,8 @@ from config import (
     CRIMINAL_CASE_PARTS_ORDER, CRIMINAL_CASE_PARTS_DISPLAY
 )
 from prompts import get_ccw_draft_generator_prompt, get_ccw_context_analyzer_prompt
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
-from utils import reinitialize_vertex_ai
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
+from common.utils import reinitialize_vertex_ai
 
 logger = logging.getLogger(__name__)
 
@@ -439,6 +437,3 @@ async def generate_case_part(
 
         logger.error(f"[CCW_SERVICE] AI-сервис перегружен: {e}")
         raise RuntimeError("AI-сервис временно перегружен. Попробуйте позже.")
-
-
-# END OF FILE services/criminal_case_service.py

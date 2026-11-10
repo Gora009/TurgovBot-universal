@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/tester_application_flow.py
-
 """
 Анкета заявки в тестировщики (сторона пользователя).
 
@@ -253,5 +251,3 @@ tester_application_conv_handler = ConversationHandler(
     allow_reentry=True,
     name="tester_application_conv",
 )
-
-# END OF FILE user_handlers/tester_application_flow.py

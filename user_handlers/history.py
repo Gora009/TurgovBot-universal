@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/history.py
-
 """
 Модуль для управления диалогом просмотра истории запросов пользователя.
 
@@ -15,7 +13,7 @@ from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler
 # Локальные импорты
 from database.manager import db_manager
 from .core import personal_account, start, unknown_text_fallback # Импортируем обработчик для кнопки "Назад"
-from utils import rate_limited # <<< ДОБАВЛЕНА ЭТА СТРОКА
+from common.utils import rate_limited # <<< ДОБАВЛЕНА ЭТА СТРОКА
 from config import (
     VIEWING_HISTORY, VIEWING_HISTORY_MESSAGE,
     GENERATION_HISTORY_PREFIX
@@ -173,5 +171,3 @@ history_conv_handler = ConversationHandler(
     per_message=False,
     allow_reentry=True
 )
-
-# END OF FILE user_handlers/history.py

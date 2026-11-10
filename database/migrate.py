@@ -1,5 +1,3 @@
-# START OF FILE database/migrate.py
-
 """
 Утилита для управления миграциями базы данных через Alembic.
 
@@ -132,6 +130,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# END OF FILE database/migrate.py
-

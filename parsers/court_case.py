@@ -1,4 +1,3 @@
-# court_case_parser.py
 """
 Парсер судебных дел с форума Majestic RP.
 
@@ -703,7 +702,7 @@ async def _case_from_worker(thread_url: str) -> Optional[Dict]:
     Cloudflare-хостов, троттлинг для рейт-лимитируемых), поэтому берёт gta5rp, который
     локальному Chromium отдаёт 403. None → вызывающий падает на локальный путь."""
     try:
-        from remote_parser_client import remote_parse_thread
+        from knowledge.remote_parser import remote_parse_thread
     except Exception as e:  # окружение без конфигурации воркера
         logging.warning(f"[CourtParser] remote-парсер недоступен: {e}")
         return None
@@ -822,4 +821,3 @@ if __name__ == "__main__":
             print("❌ Ошибка парсинга")
 
     asyncio.run(test())
-

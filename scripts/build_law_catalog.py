@@ -37,7 +37,7 @@ log = logging.getLogger("build_law_catalog")
 def _init_vertex() -> None:
     """Инициализация genai-клиента (нужна только для LLM-обогащения) — образец ingest_rules.py."""
     import config
-    from rate_limiter import init_client
+    from common.rate_limiter import init_client
     from services.sa_admin import project_id_for
     init_client(
         project_id=project_id_for(config.VERTEX_CREDENTIALS_FILE),

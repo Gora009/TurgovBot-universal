@@ -28,13 +28,13 @@ from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler
 # Локальные импорты
 import config
 from database.manager import db_manager
-from utils import get_enabled_servers, get_enabled_projects, send_project_selection_menu, rate_limited, retry_with_exponential_backoff
+from common.utils import get_enabled_servers, get_enabled_projects, send_project_selection_menu, rate_limited, retry_with_exponential_backoff
 from prompts import get_complaint_generation_prompt, get_complaint_router_prompt
-from html_to_bbcode import html_to_bbcode, save_bbcode_to_file, sanitize_telegram_html
-from court_case_parser import parse_court_case_from_url, SUPPORTED_FORUMS
+from parsers.html_to_bbcode import html_to_bbcode, save_bbcode_to_file, sanitize_telegram_html
+from parsers.court_case import parse_court_case_from_url, SUPPORTED_FORUMS
 from .core import main_menu, start, check_and_update_usage, send_error_message, _display_main_menu, unknown_text_fallback
 from .ai_retry import register_retry, retry_keyboard
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
 
 from config import (
     CHOOSING_COMPLAINT_TYPE, CHOOSING_COMPLAINT_SERVER, AWAITING_FORUM_URL,
@@ -949,7 +949,7 @@ async def process_and_send_complaint(
         logger.error(f"❌ [ОШИБКА] Ошибка при генерации документа для {chat_id}: {e}", exc_info=True)
 
         # Уведомление суперадмину
-        from utils import notify_super_admin
+        from common.utils import notify_super_admin
         error_details = (
             f"❌ Ошибка в complaint_flow\n\n"
             f"👤 Пользователь: {chat_id}\n"

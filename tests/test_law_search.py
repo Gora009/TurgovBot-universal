@@ -1,4 +1,3 @@
-# START OF FILE tests/test_law_search.py
 """
 Тесты нормализатора запросов умного поиска (без БД/сети).
 """
@@ -3736,5 +3735,3 @@ def test_applicability_rerank_does_not_cross_protected_code_hit():
         lexical,
         protected_ids={5},
     ) == fused
-
-# END OF FILE tests/test_law_search.py

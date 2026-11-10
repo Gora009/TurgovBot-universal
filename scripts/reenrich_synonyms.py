@@ -25,7 +25,7 @@ log = logging.getLogger("reenrich_synonyms")
 async def main() -> None:
     servers = sys.argv[1:] or ["memphis"]
     import config
-    from rate_limiter import init_client
+    from common.rate_limiter import init_client
     from services.sa_admin import project_id_for
     from database.manager import db_manager
     from services import law_catalog_service as cat

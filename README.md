@@ -44,12 +44,17 @@ and article search for a desktop overlay.*
 
 ```
 main.py, user_handlers/, admin_handlers/    Telegram-бот
+config.py                                    настройки, ID моделей, состояния диалогов
 api/                                         FastAPI: роутеры, схемы, безопасность
 services/                                    бизнес-логика: QA, поиск законов, каталог,
                                              эмбеддинги, лицензии, документы
-parser_worker/, knowledge_base_manager.py    сбор законов с форумов
-law_sources_data.py                          список проектов, серверов и разделов форума
-prompts.py, prompts_qa_v2.py                 промпты моделей
+knowledge/                                   законы и прецеденты: сбор с форумов, список
+                                             проектов и серверов (sources.py), клиент парсера
+parser_worker/                               отдельный сервис-парсер форумов на Playwright
+parsers/                                     разбор дел с форумов, HTML → BB-код, OCR
+integrations/                                Google Docs и Google Sheets
+common/                                      утилиты бота, лимитер запросов к Vertex AI
+prompts/                                     промпты моделей
 alembic/                                     миграции БД
 scripts/                                     обслуживание: сборка каталога, бэкапы, смоук-тесты
 tests/                                       pytest

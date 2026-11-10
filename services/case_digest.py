@@ -1,5 +1,3 @@
-# START OF FILE services/case_digest.py
-
 """Карта дела: сжатие старой части переписки вместо её выбрасывания.
 
 Зачем. Дела ролевого помощника доходят до 432 000 символов при 135 сообщениях, и вся
@@ -296,7 +294,7 @@ async def _ask_model(prompt: str) -> Optional[str]:
     """Один вызов модели-сжимателя. None — любая неудача (карта не критична)."""
     from google.genai import types
 
-    from rate_limiter import (
+    from common.rate_limiter import (
         RequestPriority, execute_vertex_request, get_current_client,
         mark_current_region_error, mark_current_region_success,
     )
@@ -469,6 +467,3 @@ async def build_case_messages(
     if fresh_plan.mode == 'full':
         return list(history)
     return assemble(fresh_plan, digest_text=text, covered_count=covered_count)
-
-
-# END OF FILE services/case_digest.py

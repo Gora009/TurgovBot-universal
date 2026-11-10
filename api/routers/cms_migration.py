@@ -1,5 +1,3 @@
-# START OF FILE api/routers/cms_migration.py
-
 """
 API эндпоинты для миграции CMS (prosecutor-cms1).
 
@@ -1035,7 +1033,3 @@ async def generate_free_form_response(
     except Exception as e:
         logger.error(f"[CMS/FREE_FORM] Ошибка: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
-
-
-# END OF FILE api/routers/cms_migration.py
-

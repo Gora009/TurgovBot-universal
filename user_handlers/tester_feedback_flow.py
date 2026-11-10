@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/tester_feedback_flow.py
-
 """
 Канал обратной связи для ТЕСТЕРОВ (баги/идеи по оверлею).
 
@@ -26,7 +24,7 @@ from telegram.ext import (
 
 from database.manager import db_manager
 from .core import main_menu, start, _display_main_menu
-from utils import safe_answer_callback_query
+from common.utils import safe_answer_callback_query
 from config import SUPER_ADMIN_ID
 
 logger = logging.getLogger(__name__)
@@ -146,5 +144,3 @@ tester_feedback_conv_handler = ConversationHandler(
     per_message=False,
     allow_reentry=True,
 )
-
-# END OF FILE user_handlers/tester_feedback_flow.py

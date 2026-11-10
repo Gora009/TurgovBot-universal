@@ -1,5 +1,3 @@
-# START OF FILE config.py
-
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -8,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # НОВЫЙ ИМПОРТ данных из отдельного файла
-from law_sources_data import LAW_SOURCES_DATA, PROJECTS_DATA, get_flat_servers
+from knowledge.sources import LAW_SOURCES_DATA, PROJECTS_DATA, get_flat_servers
 
 # --- Базовые пути ---
 # Абсолютный путь к директории проекта для надежного разрешения путей к файлам.
@@ -50,6 +48,11 @@ def set_active_gcs_bucket(name) -> None:
     _active_gcs_bucket = (str(name).strip() or None) if name else None
 
 SPREADSHEET_ID = os.getenv('SPREADSHEET_ID', '1HxTfgBWm57l2oKyfGNcLeUb9LqKC2_cZZ7ZKk22DZx8')
+
+# Экспорт уголовного дела в Google Docs (integrations/google_docs.py):
+# шаблон документа и папка Drive для готовых дел. Пусто — экспорт не работает.
+CCW_TEMPLATE_DOC_ID = os.getenv('CCW_TEMPLATE_DOC_ID', '')
+CCW_OUTPUT_FOLDER_ID = os.getenv('CCW_OUTPUT_FOLDER_ID', '')
 
 # --- РАЗДЕЛЕНИЕ КЛЮЧЕЙ GOOGLE ---
 # Путь к файлу для Google Sheets
@@ -1063,5 +1066,3 @@ PCH_STAGE_AVAILABLE_DOCS = {
     "clarification": ["summary_report", "warning"],
     "finalization": ["resolution", "warning", "case_referral", "administrative_order", "summary_report"],
 }
-
-# END OF FILE config.py

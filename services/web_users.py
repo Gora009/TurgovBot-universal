@@ -1,5 +1,3 @@
-# START OF FILE services/web_users.py
-
 """
 Веб-пользователи сайта TurgovBot: UPSERT профиля и вычисление статуса/тира.
 
@@ -84,6 +82,3 @@ async def compute_account_status(user_id: int) -> tuple[str, str]:
         tier = "standard"
 
     return tier, _TIER_LABELS[tier]
-
-
-# END OF FILE services/web_users.py

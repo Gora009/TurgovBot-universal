@@ -1,5 +1,3 @@
-# START OF FILE tests/test_qa_v2.py
-
 """
 Тесты Q&A v2 (эксперимент /qa2): сборщик подборки статей (services/qa_context.py)
 и цикл search_laws (services/qa_v2_service.py).
@@ -24,7 +22,7 @@ from services.qa_v2_service import (
     _make_thinking_config,
     _run_tool_search,
 )
-from prompts_qa_v2 import QA_V2_PROMPT_VERSION
+from prompts.qa_v2 import QA_V2_PROMPT_VERSION
 
 
 def _run(coro):
@@ -271,8 +269,8 @@ _FINAL = SimpleNamespace(function_calls=None, candidates=[], text='<b>Ответ
 
 def _wire_common(monkeypatch, responses):
     """Мокирует Vertex-обвязку: execute_vertex_request отдаёт ответы по списку."""
-    import rate_limiter
-    import utils
+    from common import rate_limiter
+    from common import utils
 
     seq = list(responses)
 
@@ -349,5 +347,3 @@ def test_empty_context_raises(monkeypatch):
     monkeypatch.setattr(qa_v2_service, 'build_qa_context', none_build)
     with pytest.raises(QaV2EmptyContext):
         _run(qa_v2_service.ask_question_v2('test_v2_srv', 'вопрос'))
-
-# END OF FILE tests/test_qa_v2.py

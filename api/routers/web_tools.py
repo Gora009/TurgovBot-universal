@@ -1,5 +1,3 @@
-# START OF FILE api/routers/web_tools.py
-
 """
 Веб-инструменты сайта TurgovBot (/v1/web/*): генератор вопросов, далее — жалобы/иски и
 уголовный писатель. Те же лимиты/аккаунт, что у бота; аутентификация — cookie-сессия
@@ -333,6 +331,3 @@ async def complaint(request: WebComplaintRequest, user: Dict = Depends(get_curre
         server_id=request.server_id,
         processing_time_ms=(time.time() - start) * 1000,
     )
-
-
-# END OF FILE api/routers/web_tools.py

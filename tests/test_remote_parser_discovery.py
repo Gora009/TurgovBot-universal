@@ -5,7 +5,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from remote_parser_client import RemoteParserClient
+from knowledge.remote_parser import RemoteParserClient
 
 
 class _Response:

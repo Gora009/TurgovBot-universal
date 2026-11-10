@@ -32,7 +32,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from database.manager import db_manager
-from law_sources_data import get_flat_servers
+from knowledge.sources import get_flat_servers
 from services.law_backfill_lock import law_backfill_global_lock
 from services.law_document_lock import law_document_server_lock
 from services.law_embedding_service import active_space_id, catalog_server_lock

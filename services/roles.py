@@ -1,5 +1,3 @@
-# START OF FILE services/roles.py
-
 """
 Режимы ролей оверлея: адвокат / прокурор / general.
 
@@ -100,6 +98,3 @@ def retrieval_bias_terms(mode: Optional[str]) -> List[str]:
     if m == "leadership":
         return _LEADERSHIP_DOC_BIAS
     return RETRIEVAL_BIAS.get(m, [])
-
-
-# END OF FILE services/roles.py

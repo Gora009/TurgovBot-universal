@@ -1,5 +1,3 @@
-# START OF FILE api/security.py
-
 """
 Модуль безопасности API.
 
@@ -457,6 +455,3 @@ def check_rate_limit(key_id: int, rpm_limit: int) -> Tuple[bool, int]:
         Tuple[bool, int]: (разрешено ли, текущее количество)
     """
     return rate_limiter.check_and_record(key_id, rpm_limit)
-
-
-# END OF FILE api/security.py

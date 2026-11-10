@@ -1,5 +1,3 @@
-# START OF FILE api/routers/auth.py
-
 """
 Device-auth эндпоинты десктоп-оверлея.
 
@@ -109,6 +107,3 @@ async def ws_ticket(claims: dict = Depends(get_device_claims)):
     # (вторичный рубеж — voice._authorize тоже отвергает laws на accept).
     ensure_full_access(claims)
     return device_auth.issue_ws_ticket(claims)
-
-
-# END OF FILE api/routers/auth.py

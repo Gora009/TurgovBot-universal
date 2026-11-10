@@ -1,5 +1,3 @@
-# START OF FILE services/assistant_service.py
-
 """
 Сервис «Ролевой помощник» для веб-API (/v1/web/assistant).
 
@@ -33,12 +31,12 @@ from config import (
 from prompts import (
     get_assistant_router_prompt, get_assistant_system_prompt, get_assistant_tool_prompt,
 )
-from precedents_manager import get_relevant_precedents
-from rate_limiter import (
+from knowledge.precedents import get_relevant_precedents
+from common.rate_limiter import (
     execute_vertex_request, RequestPriority, get_current_client,
     mark_current_region_success, mark_current_region_error,
 )
-from utils import reinitialize_vertex_ai, sanitize_telegram_html
+from common.utils import reinitialize_vertex_ai, sanitize_telegram_html
 
 logger = logging.getLogger(__name__)
 
@@ -396,6 +394,3 @@ async def list_cases(user_id: int) -> List[Dict]:
 
 async def close_case(case_id: int) -> None:
     await assistant_logger.close_case(case_id)
-
-
-# END OF FILE services/assistant_service.py

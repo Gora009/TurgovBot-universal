@@ -1,5 +1,3 @@
-# START OF FILE services/session_memory.py
-
 """
 Rolling-память диалога для оверлея (решает «контекст теряется между вопросами»).
 
@@ -96,6 +94,3 @@ def add_turn(session_id: Optional[str], source: str, text: str) -> None:
         return
     label = SOURCE_LABELS.get(source, source or "реплика")
     get_session(session_id).add(label, text)
-
-
-# END OF FILE services/session_memory.py

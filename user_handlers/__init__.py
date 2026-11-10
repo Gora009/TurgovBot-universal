@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/__init__.py
-
 """
 Пакет user_handlers.
 
@@ -49,5 +47,3 @@ __all__ = [
     'tester_application_conv_handler',  # заявки в тестеры
     'tester_feedback_conv_handler',  # канал обратной связи тестеров
 ]
-
-# END OF FILE user_handlers/__init__.py

@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/assistant_flow.py
-
 """
 Модуль для управления всем функционалом "Ролевого Помощника".
 
@@ -30,7 +28,7 @@ import config
 from services import case_digest, case_law_context
 from database import assistant_logger
 from database.manager import db_manager
-from utils import get_enabled_servers, get_enabled_projects, send_project_selection_menu, rate_limited, sanitize_telegram_html, reinitialize_vertex_ai, retry_with_exponential_backoff, safe_answer_callback_query
+from common.utils import get_enabled_servers, get_enabled_projects, send_project_selection_menu, rate_limited, sanitize_telegram_html, reinitialize_vertex_ai, retry_with_exponential_backoff, safe_answer_callback_query
 from prompts import (
     get_assistant_router_prompt,
     get_assistant_system_prompt,
@@ -38,9 +36,9 @@ from prompts import (
 )
 from .core import main_menu, start, check_and_update_usage, send_error_message, _display_main_menu, unknown_text_fallback
 from .qa_flow import _split_long_message
-from case_file_parser import fetch_case_content_from_url
+from parsers.case_file import fetch_case_content_from_url
 # Импорт модуля прецедентов
-from precedents_manager import get_relevant_precedents
+from knowledge.precedents import get_relevant_precedents
 from config import (
     CHOOSING_PROJECT, CHOOSING_ASSISTANT_ROLE, CHOOSING_ASSISTANT_STAGE, AWAITING_CASE_DESCRIPTION,
     ASSISTANT_DIALOGUE, VIEWING_ACTIVE_CASES, AWAITING_STAGE_SELECTION,
@@ -48,7 +46,7 @@ from config import (
     ASSISTANT_ROUTER_MODEL_NAME, ROLE_ASSISTANT_MODEL_NAME,
     PROJECTS_CONFIG
 )
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
 
 # --- Константы и словари для Ассистента ---
 
@@ -840,10 +838,10 @@ async def handle_case_url(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return AWAITING_CASE_DESCRIPTION
 
     # НОВОЕ: Обработка ссылок на форум для судьи
-    from court_case_parser import parse_court_case_from_url, is_supported_forum_url
+    from parsers.court_case import parse_court_case_from_url, is_supported_forum_url
     is_forum_link = is_supported_forum_url(found_url) and '/threads/' in found_url
     if context.user_data.get('rp_role') == "judge" and is_forum_link:
-        from ocr_processor import process_multiple_images
+        from parsers.ocr import process_multiple_images
         from config import COURT_OCR_MODEL_NAME
 
         await processing_msg.edit_text(
@@ -1146,8 +1144,8 @@ async def refresh_court_case(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
     try:
         # Парсим тему заново
-        from court_case_parser import parse_court_case_from_url
-        from ocr_processor import process_multiple_images
+        from parsers.court_case import parse_court_case_from_url
+        from parsers.ocr import process_multiple_images
         from config import COURT_OCR_MODEL_NAME
 
         case_data = await parse_court_case_from_url(forum_url)
@@ -1333,7 +1331,7 @@ async def receive_additional_materials(update: Update, context: ContextTypes.DEF
     user_comment = user_text  # Комментарий пользователя (если есть)
 
     # Ищем ссылку на поддерживаемые форумы
-    from court_case_parser import SUPPORTED_FORUMS
+    from parsers.court_case import SUPPORTED_FORUMS
     import re
 
     for forum_domain in SUPPORTED_FORUMS:
@@ -1359,7 +1357,7 @@ async def receive_additional_materials(update: Update, context: ContextTypes.DEF
 
         try:
             # Парсим тему с форума
-            from court_case_parser import parse_court_case_from_url
+            from parsers.court_case import parse_court_case_from_url
 
             case_data = await parse_court_case_from_url(forum_url)
 
@@ -1629,5 +1627,3 @@ assistant_conv_handler = ConversationHandler(
     per_message=False,
     allow_reentry=True
 )
-
-# END OF FILE user_handlers/assistant_flow.py

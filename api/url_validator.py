@@ -1,5 +1,3 @@
-# START OF FILE api/url_validator.py
-
 """
 URL Validation Module for SSRF Protection.
 

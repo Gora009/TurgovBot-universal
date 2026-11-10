@@ -1,4 +1,3 @@
-# START OF FILE tests/test_web_auth.py
 """Тесты веб-входа сайта (services/telegram_login.py) + паритет лимитера с ботом.
 
 Покрывают:

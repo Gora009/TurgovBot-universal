@@ -1,5 +1,3 @@
-# START OF FILE api/routers/overlay.py
-
 """
 API эндпоинты голосового оверлея: короткий совет по ситуации (RAG + Gemini).
 
@@ -234,7 +232,7 @@ async def servers(claims: Dict = Depends(get_device_claims)):
     # PROJECTS_DATA — иерархия проект→серверы. Включаем только серверы с РЕАЛЬНО доступной базой
     # знаний (есть law_documents с gemini_file_uri), чтобы пикер не показывал серверы, на которых
     # вопрос упадёт 400 «база пуста».
-    from law_sources_data import PROJECTS_DATA
+    from knowledge.sources import PROJECTS_DATA
 
     rows = await db_manager.fetch(
         "SELECT DISTINCT server_id FROM law_documents WHERE gemini_file_uri IS NOT NULL"
@@ -292,7 +290,7 @@ async def leadership_servers(claims: Dict = Depends(get_device_claims)):
     # LEADERSHIP_PROJECTS — статический маппинг игровой проект→слои свода. Показываем только то, что
     # РЕАЛЬНО проиндексировано (namespace есть в law_chunks) — иначе пикер предложил бы проект/сервер,
     # на котором «Обзвон» вернул бы пусто.
-    from law_sources_data import LEADERSHIP_PROJECTS
+    from knowledge.sources import LEADERSHIP_PROJECTS
 
     rag_rows = await db_manager.fetch("SELECT DISTINCT server_id FROM law_chunks")
     have = {r["server_id"] for r in rag_rows}
@@ -368,6 +366,3 @@ async def qa(request: QaRequest, claims: Dict = Depends(get_device_claims)):
     except Exception as e:
         logger.error("[API/OVERLAY] qa error: %s", e, exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
-
-
-# END OF FILE api/routers/overlay.py

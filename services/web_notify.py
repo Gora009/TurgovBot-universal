@@ -1,5 +1,3 @@
-# START OF FILE services/web_notify.py
-
 """
 Веб-уведомления в Telegram (для сайта): отправка сообщений в каналы заявок/поддержки
 через Bot API (httpx, из api-процесса — без python-telegram-bot) + загрузка пруфов в GCS.
@@ -166,6 +164,3 @@ async def post_support_ticket(
         return int(result["chat"]["id"]), int(result["message_id"])
     except Exception:
         return None
-
-
-# END OF FILE services/web_notify.py

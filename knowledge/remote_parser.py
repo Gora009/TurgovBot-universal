@@ -1,4 +1,3 @@
-# START OF FILE remote_parser_client.py
 """
 Клиент для удалённого парсера.
 Используется основным ботом для отправки задач на парсинг к Worker-серверу.
@@ -327,6 +326,3 @@ async def check_remote_parser_available() -> bool:
     """Проверить доступность удалённого парсера"""
     client = get_parser_client()
     return await client.health_check()
-
-# END OF FILE remote_parser_client.py
-

@@ -1,5 +1,3 @@
-# START OF FILE services/embeddings.py
-
 """
 Эмбеддинги для семантического ретривала (RAG) голосового ассистента.
 
@@ -33,7 +31,7 @@ import time
 from typing import List, Optional, Sequence
 
 import config
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client
 
 logger = logging.getLogger(__name__)
 
@@ -314,6 +312,3 @@ def to_pgvector(values: Sequence[float]) -> str:
     """Форматирует вектор в строку '[v1,v2,...]' для каста $N::vector / $N::halfvec.
     Формат текстового представления у vector и halfvec одинаковый."""
     return "[" + ",".join(repr(float(v)) for v in values) + "]"
-
-
-# END OF FILE services/embeddings.py

@@ -1,5 +1,3 @@
-# START OF FILE services/law_catalog_service.py
-
 """
 Каталог статей законки (law_articles/law_synonyms/law_article_related) для умного поиска.
 
@@ -1601,7 +1599,7 @@ async def enrich_articles_for_server(
     (новые/изменённые). Ошибки батча не прерывают остальные.
     """
     from google.genai import types
-    from rate_limiter import execute_vertex_request, RequestPriority, get_current_client
+    from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client
 
     stats = {"articles": 0, "synonyms": 0, "batches_failed": 0}
     all_articles = [
@@ -2322,6 +2320,3 @@ async def _sync_catalog_for_documents(server_id: str, doc_ids: List[int]) -> Opt
                "failed_documents": len(failed_document_ids)}
     logger.info("[LAW_CATALOG] server=%s: авто-синк завершён %s", server_id, summary)
     return summary
-
-
-# END OF FILE services/law_catalog_service.py

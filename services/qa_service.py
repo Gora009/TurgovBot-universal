@@ -1,5 +1,3 @@
-# START OF FILE services/qa_service.py
-
 """
 Сервис для RAG-ответов на юридические вопросы.
 
@@ -20,9 +18,9 @@ from config import (
     SERVERS_CONFIG
 )
 from prompts import get_system_prompt, get_router_prompt
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
-from precedents_manager import get_relevant_precedents
-from utils import reinitialize_vertex_ai
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
+from knowledge.precedents import get_relevant_precedents
+from common.utils import reinitialize_vertex_ai
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +233,3 @@ async def ask_question(
 
         logger.error(f"[QA_SERVICE] AI-сервис перегружен: {e}")
         raise RuntimeError("AI-сервис временно перегружен. Попробуйте позже.")
-
-
-# END OF FILE services/qa_service.py

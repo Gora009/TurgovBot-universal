@@ -1,5 +1,3 @@
-# START OF FILE api/routers/web_assistant.py
-
 """
 Веб «Ролевой помощник» (/v1/web/assistant): создание дела + диалог + инструменты.
 Состояние дела — в БД (assistant_cases/assistant_messages). Лимит ассистента (окно 72ч,
@@ -158,6 +156,3 @@ async def close_case(case_id: int, user: Dict = Depends(get_current_web_user),
     await _load_owned_case(case_id, user["user_id"], require_active=False)
     await asvc.close_case(case_id)
     return {"ok": True}
-
-
-# END OF FILE api/routers/web_assistant.py

@@ -1,5 +1,3 @@
-# START OF FILE services/interview_service.py
-
 """
 Сервис генерации вопросов для собеседований на госслужбу RP-серверов.
 
@@ -22,11 +20,11 @@ from config import (
     QUESTION_GENERATOR_MODEL_NAME, SERVERS_CONFIG,
 )
 from prompts import get_interview_questions_prompt
-from rate_limiter import (
+from common.rate_limiter import (
     execute_vertex_request, RequestPriority, get_current_client,
     mark_current_region_success, mark_current_region_error,
 )
-from utils import reinitialize_vertex_ai
+from common.utils import reinitialize_vertex_ai
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +122,3 @@ async def generate_interview_questions(
         raise RuntimeError("AI не вернул вопросы, попробуйте ещё раз")
     logger.info("[INTERVIEW_SERVICE] Сгенерировано, длина=%s", len(text))
     return text
-
-
-# END OF FILE services/interview_service.py

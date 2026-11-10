@@ -1,5 +1,3 @@
-# START OF FILE scripts/golden_advice.py
-
 """
 Golden-set харнесс качества режима «Совет» оверлея (этап 0 плана docs/OVERLAY_ADVICE_PROMPT_PLAN.md).
 
@@ -152,7 +150,7 @@ def _init_vertex(cfg) -> None:
             "  docker compose exec api python -m scripts.golden_advice --mode <...>"
         )
     try:
-        from rate_limiter import init_client
+        from common.rate_limiter import init_client
         from services.sa_admin import project_id_for
         init_client(
             project_id=project_id_for(cfg.VERTEX_CREDENTIALS_FILE),
@@ -639,5 +637,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-# END OF FILE scripts/golden_advice.py

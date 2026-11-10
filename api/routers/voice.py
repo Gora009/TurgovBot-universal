@@ -1,5 +1,3 @@
-# START OF FILE api/routers/voice.py
-
 """
 WebSocket-эндпоинт голосового оверлея: приём PCM-аудио → потоковое распознавание (Chirp)
 → выдача транскрипта обратно клиенту.
@@ -143,6 +141,3 @@ async def voice_stream(websocket: WebSocket):
         with contextlib.suppress(Exception):
             await websocket.close()
         logger.info("[VOICE] WS closed device=%s", auth.get("device_id"))
-
-
-# END OF FILE api/routers/voice.py

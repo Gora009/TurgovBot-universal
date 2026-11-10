@@ -1,5 +1,3 @@
-# START OF FILE api/main.py
-
 """
 Главный модуль FastAPI приложения.
 
@@ -25,7 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import config
 from config import API_VERSION, API_SERVER_PORT, API_SERVER_HOST, GCP_REGION, GCP_PROJECT_ID, VERTEX_CREDENTIALS_FILE, DATABASE_URL, LAW_SEARCH_WARMUP_INTERVAL
-from rate_limiter import init_client
+from common.rate_limiter import init_client
 
 from .schemas import HealthResponse, ErrorResponse
 from .middleware import SecurityHeadersMiddleware, RequestLoggingMiddleware, DynamicCORSMiddleware, DocsProtectionMiddleware
@@ -107,7 +105,7 @@ async def lifespan(app: FastAPI):
     # Keep-warm облачных embeddings остаётся только для отдельного law_chunks/RAG-контура.
     # Поиск законов Overlay этот вызов не использует: его vector-нога полностью локальная FRIDA.
     async def _keep_embeddings_warm():
-        from rate_limiter import RequestPriority
+        from common.rate_limiter import RequestPriority
         from services.embeddings import embed_one, TASK_QUERY
         while True:
             try:
@@ -394,6 +392,3 @@ async def root():
         "status": "running",
         "auth": "API key required in X-API-Key header"
     }
-
-
-# END OF FILE api/main.py

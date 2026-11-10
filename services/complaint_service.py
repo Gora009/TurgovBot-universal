@@ -1,5 +1,3 @@
-# START OF FILE services/complaint_service.py
-
 """
 Сервис генерации жалоб/исков (пользовательский «составить документ»).
 
@@ -23,12 +21,12 @@ from database.manager import db_manager
 from services import case_law_context
 from config import COMPLAINT_TYPES, COMPLAINT_GENERATOR_MODEL_NAME, SERVERS_CONFIG
 from prompts import get_complaint_generation_prompt
-from html_to_bbcode import html_to_bbcode
-from rate_limiter import (
+from parsers.html_to_bbcode import html_to_bbcode
+from common.rate_limiter import (
     execute_vertex_request, RequestPriority, get_current_client,
     mark_current_region_success, mark_current_region_error,
 )
-from utils import reinitialize_vertex_ai
+from common.utils import reinitialize_vertex_ai
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +179,3 @@ async def generate_complaint(
         "generated_bbcode": generated_bbcode,
         "legality_warning": legality_warning or None,
     }
-
-
-# END OF FILE services/complaint_service.py

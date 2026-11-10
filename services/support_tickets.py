@@ -1,5 +1,3 @@
-# START OF FILE services/support_tickets.py
-
 """
 Обращения в поддержку с сайта (таблица support_tickets, миграция 016).
 
@@ -120,6 +118,3 @@ async def set_channel_message(ticket_id: int, chat_id: int, message_id: int) -> 
         )
     except Exception:
         logger.exception("[support] не удалось сохранить channel_message для #%s", ticket_id)
-
-
-# END OF FILE services/support_tickets.py

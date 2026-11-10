@@ -1,5 +1,3 @@
-# START OF FILE rate_limiter.py
-
 """
 Модуль для управления rate limiting запросов к Vertex AI.
 
@@ -623,7 +621,3 @@ async def execute_vertex_request(
 def get_rate_limiter_stats() -> Dict[str, Any]:
     """Возвращает статистику rate limiter."""
     return vertex_rate_limiter.get_stats()
-
-
-# END OF FILE rate_limiter.py
-

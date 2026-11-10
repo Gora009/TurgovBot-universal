@@ -1,5 +1,3 @@
-# START OF FILE services/case_law_context.py
-
 """Подборка статей закона для «тяжёлых» флоу: ролевой помощник, жалобы, иски.
 
 Зачем. Исторически эти потоки подавали модели ЦЕЛЫЕ кодексы через Gemini File API:
@@ -110,5 +108,3 @@ def history_facts_and_recent(history: List[Dict[str, Any]]) -> tuple[str, str]:
     facts = history[0].get('content') or ''
     recent = ' '.join((m.get('content') or '') for m in history[-3:])
     return facts, recent
-
-# END OF FILE services/case_law_context.py

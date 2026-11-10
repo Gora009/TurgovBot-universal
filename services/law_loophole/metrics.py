@@ -1,5 +1,3 @@
-# START OF FILE services/law_loophole/metrics.py
-
 """
 Метрики качества анализатора дыр — для golden-харнесса (A/B старый промпт ↔ v2).
 
@@ -96,6 +94,3 @@ def compare_reports(
     if old_m["grounding_rate"] is not None and new_m["grounding_rate"] is not None:
         deltas["grounding_rate"] = round(new_m["grounding_rate"] - old_m["grounding_rate"], 3)
     return {"old": old_m, "new": new_m, "delta": deltas}
-
-
-# END OF FILE services/law_loophole/metrics.py

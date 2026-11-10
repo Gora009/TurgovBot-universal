@@ -1,5 +1,3 @@
-# START OF FILE services/voice_session.py
-
 """
 Endless-streaming обёртка над stt_service.stream_transcribe для голосового оверлея.
 
@@ -102,6 +100,3 @@ class VoiceSession:
                 yield {"type": "error", "text": str(e), "source": self.source}
                 # короткая пауза, чтобы при стабильной ошибке не крутить переоткрытие впустую
                 await asyncio.sleep(0.5)
-
-
-# END OF FILE services/voice_session.py

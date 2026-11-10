@@ -1,5 +1,3 @@
-# START OF FILE admin_support_tickets.py
-
 """
 Раздел админки бота: обращения в поддержку с сайта (таблица support_tickets).
 
@@ -136,6 +134,3 @@ async def close_support_ticket(update: Update, context: ContextTypes.DEFAULT_TYP
                                       disable_web_page_preview=True)
     except Exception:
         pass
-
-
-# END OF FILE admin_support_tickets.py

@@ -1,5 +1,3 @@
-# START OF FILE services/vip_applications.py
-
 """
 Заявки на ВИП/безлимит за промокод.
 
@@ -228,6 +226,3 @@ async def set_application_status(app_id: int, status: str, reviewed_by: int) -> 
         app_id, status, reviewed_by,
     )
     return _row(row)
-
-
-# END OF FILE services/vip_applications.py

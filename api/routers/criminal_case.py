@@ -1,5 +1,3 @@
-# START OF FILE api/routers/criminal_case.py
-
 """
 API эндпоинты для Criminal Case Writer (создание уголовных дел).
 """
@@ -419,6 +417,3 @@ async def get_criminal_case(
     except Exception as e:
         logger.error(f"[API/CCW] Ошибка получения сессии: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
-
-
-# END OF FILE api/routers/criminal_case.py

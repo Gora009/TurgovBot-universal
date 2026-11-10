@@ -17,8 +17,8 @@ import asyncio
 import logging
 
 from database.manager import db_manager
-from remote_parser_client import remote_parse_section, remote_parse_topic, check_remote_parser_available
-from knowledge_base_manager import save_law_document_to_db
+from knowledge.remote_parser import remote_parse_section, remote_parse_topic, check_remote_parser_available
+from knowledge.base_manager import save_law_document_to_db
 from services.indexing_service import index_server_laws
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -74,7 +74,7 @@ async def scrape_section(section_url: str) -> int:
 def _init_vertex() -> None:
     """Инициализация genai-клиента (для эмбеддингов gemini-embedding-001) — образец api/main.py/golden_advice."""
     import config
-    from rate_limiter import init_client
+    from common.rate_limiter import init_client
     from services.sa_admin import project_id_for
     init_client(
         project_id=project_id_for(config.VERTEX_CREDENTIALS_FILE),

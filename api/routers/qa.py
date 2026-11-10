@@ -1,5 +1,3 @@
-# START OF FILE api/routers/qa.py
-
 """
 API эндпоинты для RAG-ответов на юридические вопросы.
 """
@@ -92,6 +90,3 @@ async def ask_legal_question(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
-
-
-# END OF FILE api/routers/qa.py

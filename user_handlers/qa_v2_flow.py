@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/qa_v2_flow.py
-
 """
 /qa2 — ЭКСПЕРИМЕНТ Q&A v2. Только админы, только сервер config.QA_V2_SERVER_ID.
 
@@ -21,7 +19,7 @@ from telegram.ext import ContextTypes
 
 import config
 from database.manager import db_manager
-from utils import sanitize_telegram_html
+from common.utils import sanitize_telegram_html
 from services.qa_v2_service import ask_question_v2, QaV2EmptyContext
 from .qa_flow import _split_long_message
 
@@ -123,5 +121,3 @@ async def qa2_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='HTML',
         disable_web_page_preview=True,
     )
-
-# END OF FILE user_handlers/qa_v2_flow.py

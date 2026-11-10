@@ -1,4 +1,3 @@
-# ocr_processor.py
 """
 OCR-процессор для распознавания текста с изображений судебных документов.
 
@@ -19,7 +18,7 @@ from typing import Optional, Dict
 from google import genai
 from google.genai import types
 
-from rate_limiter import get_client_for_model
+from common.rate_limiter import get_client_for_model
 
 # Проверка наличия socksio
 try:
@@ -201,7 +200,7 @@ async def _download_image(image_url: str, retry_count: int = 3, delay_between_im
 async def _download_image_via_worker(image_url: str, referer_url: str) -> Optional[str]:
     """Фолбэк-загрузка вложения через parser-worker (у него транспорт с обходом Cloudflare)."""
     try:
-        from remote_parser_client import remote_fetch_image
+        from knowledge.remote_parser import remote_fetch_image
     except Exception:
         return None
 
@@ -393,4 +392,3 @@ async def process_multiple_images(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     print("OCR процессор готов к использованию")
-

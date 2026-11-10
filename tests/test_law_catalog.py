@@ -1,4 +1,3 @@
-# START OF FILE tests/test_law_catalog.py
 """
 Тесты каталога статей умного поиска: сегментация (split_into_blocks),
 нормализация заголовков (normalize_header) и парсер LLM-ответа обогащения.
@@ -3808,7 +3807,7 @@ async def test_current_enrichment_updates_vector_and_replaces_only_auto_synonyms
 
 @pytest.mark.asyncio
 async def test_server_enrichment_loads_signature_registry_once_not_per_article(monkeypatch):
-    import rate_limiter
+    from common import rate_limiter
 
     articles = [
         {
@@ -4092,7 +4091,7 @@ def test_auto_enrichment_response_allows_only_empty_tombstone_enrichment():
 
 @pytest.mark.asyncio
 async def test_server_enrichment_never_partially_writes_incomplete_batch(monkeypatch):
-    import rate_limiter
+    from common import rate_limiter
 
     articles = [
         {
@@ -4162,7 +4161,7 @@ async def test_server_enrichment_never_partially_writes_incomplete_batch(monkeyp
 
 @pytest.mark.asyncio
 async def test_server_enrichment_never_writes_when_gemini_review_is_invalid(monkeypatch):
-    import rate_limiter
+    from common import rate_limiter
 
     articles = [{
         "id": 1,
@@ -4214,7 +4213,7 @@ async def test_server_enrichment_never_writes_when_gemini_review_is_invalid(monk
 
 @pytest.mark.asyncio
 async def test_server_enrichment_writes_second_pass_correction_not_draft(monkeypatch):
-    import rate_limiter
+    from common import rate_limiter
 
     articles = [{
         "id": 1,
@@ -4353,5 +4352,3 @@ async def test_auto_enrichment_db_batch_is_atomic_and_requires_twelve_effective(
     assert calls == [1, 2]
     assert transaction_state == {"committed": False, "rolled_back": True}
     assert registry.records == {}
-
-# END OF FILE tests/test_law_catalog.py

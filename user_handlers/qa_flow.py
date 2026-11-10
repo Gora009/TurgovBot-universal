@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/qa_flow.py
-
 """
 Модуль для управления основным диалогом "Задать вопрос".
 
@@ -29,17 +27,15 @@ from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler
 
 # Локальные импорты
 import config
-import knowledge_base_manager
+from knowledge import base_manager as knowledge_base_manager
 from database.manager import db_manager
-from utils import get_enabled_servers, get_enabled_projects, send_project_selection_menu, rate_limited, sanitize_telegram_html, reinitialize_vertex_ai, retry_with_exponential_backoff, safe_answer_callback_query
-# ВРЕМЕННО ОТКЛЮЧЕНО: from google_sheets_handler import log_to_google_sheet
+from common.utils import get_enabled_servers, get_enabled_projects, send_project_selection_menu, rate_limited, sanitize_telegram_html, reinitialize_vertex_ai, retry_with_exponential_backoff, safe_answer_callback_query
 from prompts import get_system_prompt, get_router_prompt, get_optimizer_prompt
-# ВРЕМЕННО ОТКЛЮЧЕНО: from voice_processor import transcribe_voice
-from subscription_manager import check_subscription
+from common.subscription import check_subscription
 from .core import main_menu, start, check_and_update_usage, send_error_message, personal_account, _display_main_menu, unknown_text_fallback
 from .ai_retry import register_retry, retry_keyboard
 # Импорт модуля прецедентов
-from precedents_manager import get_relevant_precedents
+from knowledge.precedents import get_relevant_precedents
 from config import (
     CHOOSING_PROJECT, CHOOSING_SERVER, CHOOSING_ANSWER_TYPE, AWAITING_QUESTION,
     AWAITING_CLARIFICATION,
@@ -49,7 +45,7 @@ from config import (
     ROUTER_MODEL_NAME, LEGAL_CONSULTANT_MODEL_NAME, QUESTION_OPTIMIZER_MODEL_NAME,
     HISTORY_LIMIT, PROJECTS_CONFIG
 )
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
 
 
 QUESTION_TYPE_LABELS = {
@@ -1200,5 +1196,3 @@ user_conv_handler = ConversationHandler(
     ],
     per_message=False, allow_reentry=True
 )
-
-# END OF FILE user_handlers/qa_flow.py

@@ -1,5 +1,3 @@
-# START OF FILE scripts/test_universal_key_e2e.py
-
 """
 E2E-тест универсального ключа laws-билда (миграция 019 + services/license.py + device_auth.py).
 
@@ -210,5 +208,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-# END OF FILE scripts/test_universal_key_e2e.py

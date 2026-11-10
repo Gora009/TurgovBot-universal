@@ -1,5 +1,3 @@
-# START OF FILE services/stt_service.py
-
 """
 STT для голосового оверлея (Фаза 3): потоковое распознавание речи через
 Google Cloud Speech-to-Text v2, модель chirp_3 (ru-RU GA в потоке).
@@ -160,6 +158,3 @@ async def stream_transcribe(
     except Exception:
         logger.exception("[STT] streaming_recognize error")
         raise
-
-
-# END OF FILE services/stt_service.py

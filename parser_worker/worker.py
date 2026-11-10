@@ -1,4 +1,3 @@
-# START OF FILE parser_worker/worker.py
 """
 Удалённый Worker для парсинга форума.
 Запускается на отдельном сервере где парсинг работает стабильно.
@@ -98,7 +97,7 @@ HOST_FETCH_DELAYS = _parse_host_delays(os.environ.get('HOST_FETCH_DELAYS', 'foru
 
 # Кап страниц пагинации для рейт-лимитируемых хостов: throttle × безлимитный обход длинной
 # темы (жалобы парсятся без first_n) иначе гарантированно упирается в REQUEST_TIMEOUT=180с
-# клиента (remote_parser_client.py) — воркер продолжал бы молотить после дисконнекта бота.
+# клиента (knowledge/remote_parser.py) — воркер продолжал бы молотить после дисконнекта бота.
 THROTTLED_HOST_MAX_PAGES = max(1, int(os.environ.get('THROTTLED_HOST_MAX_PAGES', '10')))
 
 # Потолок вложения для /fetch-image (OCR всё равно отбрасывает файлы >10МБ)
@@ -1711,4 +1710,3 @@ async def api_parse_topic(request: ParseTopicRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8765)
-

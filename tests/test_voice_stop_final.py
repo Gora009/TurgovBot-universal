@@ -1,4 +1,3 @@
-# START OF FILE tests/test_voice_stop_final.py
 """
 E2E-симуляция WS-эндпоинта голосового оверлея (/v1/voice/stream).
 
@@ -168,6 +167,3 @@ async def test_unauthorized_closes(authorized=None):
     assert not ws.accepted
     assert ws.closed_code == 1008
     assert ws.sent == []
-
-
-# END OF FILE tests/test_voice_stop_final.py

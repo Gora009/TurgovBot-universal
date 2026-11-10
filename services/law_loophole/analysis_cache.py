@@ -1,5 +1,3 @@
-# START OF FILE services/law_loophole/analysis_cache.py
-
 """
 Кэш результатов дорогих анализов «весь свод» (full_server).
 
@@ -288,6 +286,3 @@ async def get_analysis_result(result_id: int) -> Optional[Dict[str, Any]]:
         except (ValueError, TypeError):
             d["result"] = {}
     return d
-
-
-# END OF FILE services/law_loophole/analysis_cache.py

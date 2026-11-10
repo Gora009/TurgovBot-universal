@@ -9,7 +9,7 @@ from config import CHOOSING_ACTION
 
 async def show_api_monitoring(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Показывает статистику использования Vertex AI API через rate limiter."""
-    from rate_limiter import vertex_rate_limiter
+    from common.rate_limiter import vertex_rate_limiter
 
     query = update.callback_query
     await query.answer()
@@ -86,7 +86,7 @@ async def show_api_monitoring(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def reset_api_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Сбрасывает статистику rate limiter."""
-    from rate_limiter import vertex_rate_limiter
+    from common.rate_limiter import vertex_rate_limiter
 
     query = update.callback_query
     await query.answer("Статистика сброшена ✅")
@@ -100,7 +100,7 @@ async def reset_api_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def cleanup_gdrive_storage(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Очищает хранилище Google Drive сервисного аккаунта."""
-    from google_docs_exporter import _cleanup_service_account_storage
+    from integrations.google_docs import _cleanup_service_account_storage
 
     query = update.callback_query
     await query.answer("Начинаю очистку...")

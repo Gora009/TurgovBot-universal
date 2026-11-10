@@ -1,5 +1,3 @@
-# START OF FILE knowledge_base_manager.py
-
 import asyncio
 import re
 import traceback
@@ -20,10 +18,10 @@ from google.api_core import exceptions as google_exceptions
 import config
 from database.manager import db_manager
 # ИЗМЕНЕНИЕ: Импортируем нашу новую функцию
-from utils import get_enabled_servers, reinitialize_vertex_ai
+from common.utils import get_enabled_servers, reinitialize_vertex_ai
 
 # Импорт клиента удалённого парсера
-from remote_parser_client import (
+from knowledge.remote_parser import (
     remote_discover_section,
     remote_parse_topic,
     check_remote_parser_available,
@@ -1567,7 +1565,7 @@ async def sync_precedents_for_all_servers(genai_client=None, force_update: bool 
     Returns:
         Кортеж (количество серверов с обновлёнными прецедентами, список серверов с ошибками)
     """
-    from precedents_manager import sync_precedents_for_server
+    from knowledge.precedents import sync_precedents_for_server
 
     logging.info("===== НАЧАЛО ГЛОБАЛЬНОЙ СИНХРОНИЗАЦИИ ПРЕЦЕДЕНТОВ =====")
 
@@ -1603,5 +1601,3 @@ async def sync_precedents_for_all_servers(genai_client=None, force_update: bool 
 
     logging.info(f"===== СИНХРОНИЗАЦИЯ ПРЕЦЕДЕНТОВ ЗАВЕРШЕНА. Успешно: {successful}/{len(servers_with_precedents)} =====")
     return successful, failed
-
-# END OF FILE knowledge_base_manager.py

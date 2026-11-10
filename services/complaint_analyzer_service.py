@@ -1,5 +1,3 @@
-# START OF FILE services/complaint_analyzer_service.py
-
 """
 Сервис для Complaint Analyzer API.
 
@@ -38,15 +36,15 @@ from prompts import (
     get_ago_generation_prompt,
     get_custom_resolution_prompt
 )
-from rate_limiter import (
+from common.rate_limiter import (
     execute_vertex_request,
     RequestPriority,
     get_current_client,
     mark_current_region_success,
     mark_current_region_error
 )
-from utils import reinitialize_vertex_ai
-from remote_parser_client import remote_parse_topic
+from common.utils import reinitialize_vertex_ai
+from knowledge.remote_parser import remote_parse_topic
 
 logger = logging.getLogger(__name__)
 
@@ -2970,6 +2968,3 @@ def _build_free_form_prompt(
 {regenerate_feedback}"""
 
     return base_prompt
-
-
-# END OF FILE services/complaint_analyzer_service.py

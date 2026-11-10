@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/complaint_analysis.py
-
 """
 Промпт для полного анализа жалобы (analyzeComplaintFull).
 
@@ -277,7 +275,3 @@ def get_combined_analysis_prompt_with_laws(title: str, content: str, laws_text: 
 }}
 
 Ответь только JSON, без пояснений и без markdown."""
-
-
-# END OF FILE api/prompts/complaint_analysis.py
-

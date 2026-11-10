@@ -290,7 +290,7 @@ async def toggle_maintenance_mode(update: Update, context: ContextTypes.DEFAULT_
     context.application.bot_data['maintenance_mode'] = new_mode
     # Персистим — чтобы режим переживал рестарт bot/БД.
     try:
-        from utils import set_maintenance_mode
+        from common.utils import set_maintenance_mode
         await set_maintenance_mode(new_mode)
     except Exception:
         logging.warning("Не удалось сохранить флаг тех. работ в system_cache", exc_info=True)

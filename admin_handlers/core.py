@@ -12,7 +12,7 @@ from telegram import (
 from telegram.ext import ContextTypes, ConversationHandler
 
 from database.manager import db_manager
-from google_sheets_handler import log_admin_action_to_sheet
+from integrations.google_sheets import log_admin_action_to_sheet
 from config import SUPER_ADMIN_ID, CHOOSING_ACTION
 from services.promo_service import is_promo_active
 from services.tester_applications import count_pending as ta_count_pending

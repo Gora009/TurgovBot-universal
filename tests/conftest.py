@@ -1,4 +1,3 @@
-# START OF FILE tests/conftest.py
 """
 Pytest конфиг: гарантируем, что корень проекта и sys.path позволяют
 импортировать config.py и пакеты services/, api/, user_handlers/.

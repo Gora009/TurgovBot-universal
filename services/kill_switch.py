@@ -1,5 +1,3 @@
-# START OF FILE services/kill_switch.py
-
 """
 Удалённый кил-свитч (Слой F плана усиления защиты) — серверная часть: ретрансляция подписанных
 ОФЛАЙН-ключом релиза пер-устройство команд деактивации/чистки.
@@ -169,6 +167,3 @@ async def ack(command_id: str, hwid_pubkey: str, ack_sig: str) -> Dict[str, Any]
         return {"error": "db_error"}     # не 500: команда осталась pending (безопасная сторона)
     logger.warning("[kill_switch] reap ACK от pubkey=…%s (command reaped)", (hwid_pubkey or "")[-8:])
     return {"ok": True}
-
-
-# END OF FILE services/kill_switch.py

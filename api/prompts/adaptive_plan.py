@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/adaptive_plan.py
-
 """
 Промпты для генерации и адаптации плана работы (generatePlanAI, adaptPlanAI).
 
@@ -238,7 +236,3 @@ def get_adapt_plan_prompt(
 Если нужно — укажи конкретные изменения.
 
 Ответь только JSON по заданной схеме, без markdown."""
-
-
-# END OF FILE api/prompts/adaptive_plan.py
-

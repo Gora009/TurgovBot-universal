@@ -1,5 +1,3 @@
-# START OF FILE services/license_events.py
-
 """
 Серверный детект аномалий лицензии (Слой C) + алерты супер-админу по двум каналам (Слой D).
 
@@ -530,6 +528,3 @@ async def _alert(*, event_type: str, severity: int, user_id: Optional[int], hwid
             await _send_telegram(ch, html)
     except Exception as e:
         logger.warning("[license_events] _alert упал: %s", e)
-
-
-# END OF FILE services/license_events.py

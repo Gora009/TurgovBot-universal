@@ -1,5 +1,3 @@
-# START OF FILE services/license.py
-
 """
 Лицензирование оверлея по КЛЮЧУ + привязка к железу (HWID).
 
@@ -617,6 +615,3 @@ async def user_license_view(user_id: int) -> Dict[str, Any]:
         "bound_at": row["bound_at"],
         "hwid_banned": banned,
     }
-
-
-# END OF FILE services/license.py

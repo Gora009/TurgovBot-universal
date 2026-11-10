@@ -9,14 +9,14 @@ from types import SimpleNamespace
 
 import pytest
 
-import knowledge_base_manager as kb
-from knowledge_base_manager import (
+from knowledge import base_manager as kb
+from knowledge.base_manager import (
     canonical_thread_url,
     discovered_thread_ids,
     extract_thread_id_from_url,
     filter_discovered_thread_urls,
 )
-from remote_parser_client import SectionDiscoveryResult
+from knowledge.remote_parser import SectionDiscoveryResult
 
 
 class _FakeBucket:

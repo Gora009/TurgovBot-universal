@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/form_validation.py
-
 """
 Промпт для AI-валидации формы обращения (validateFormAI).
 
@@ -137,7 +135,3 @@ def get_form_validation_ai_prompt(title: str, content: str) -> str:
 4. Оцени серьёзность нарушений формы
 
 Ответь ТОЛЬКО в формате JSON по заданной схеме, без markdown и пояснений."""
-
-
-# END OF FILE api/prompts/form_validation.py
-

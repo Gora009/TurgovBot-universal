@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/vip_application_flow.py
-
 """
 Анкета заявки на ВИП/безлимит за промокод (сторона пользователя).
 
@@ -428,5 +426,3 @@ vip_application_conv_handler = ConversationHandler(
     allow_reentry=True,
     name="vip_application_conv",
 )
-
-# END OF FILE user_handlers/vip_application_flow.py

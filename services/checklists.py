@@ -1,5 +1,3 @@
-# START OF FILE services/checklists.py
-
 """
 Живые чек-листы процедуры под роль (адвокат/прокурор) для голосового оверлея.
 
@@ -21,7 +19,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import config
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client
 from services.advice_service import rewrite_queries
 from services.retrieval_service import retrieve, retrieve_multi, format_chunks_for_prompt
 from services.roles import normalize_mode
@@ -181,6 +179,3 @@ async def evaluate_checklist(
             "note": ev.get("note", ""),
         })
     return {"items": out}
-
-
-# END OF FILE services/checklists.py

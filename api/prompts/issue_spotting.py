@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/issue_spotting.py
-
 """
 Промпт для issue spotting (getIssueSpottingTags).
 
@@ -97,7 +95,3 @@ def get_issue_spotting_prompt_with_laws(facts: list, laws_text: str) -> str:
 Используй терминологию из законов сервера. Только релевантные к фактам темы, без лишнего. 3–15 тегов.
 
 Ответь только JSON по заданной схеме."""
-
-
-# END OF FILE api/prompts/issue_spotting.py
-

@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/interview_flow.py
-
 """
 Модуль для управления диалогом генерации вопросов для собеседований.
 
@@ -25,7 +23,7 @@ from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler
 # Локальные импорты
 import config
 from database.manager import db_manager
-from utils import get_enabled_servers, get_enabled_projects, send_project_selection_menu, rate_limited, reinitialize_vertex_ai, safe_answer_callback_query, retry_with_exponential_backoff
+from common.utils import get_enabled_servers, get_enabled_projects, send_project_selection_menu, rate_limited, reinitialize_vertex_ai, safe_answer_callback_query, retry_with_exponential_backoff
 from prompts import get_interview_questions_prompt
 from .core import main_menu, start, check_and_update_usage, send_error_message, _display_main_menu, unknown_text_fallback
 from .qa_flow import send_answer_with_clarify_button, save_history  # Импортируем функцию отправки ответа
@@ -38,7 +36,7 @@ from config import (
     PROJECTS_CONFIG
 )
 from database.manager import db_manager
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
 
 
 # Нужно импортировать функцию сохранения в историю
@@ -365,5 +363,3 @@ interview_conv_handler = ConversationHandler(
     per_message=False,
     allow_reentry=True
 )
-
-# END OF FILE user_handlers/interview_flow.py

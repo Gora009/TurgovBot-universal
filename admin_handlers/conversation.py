@@ -73,7 +73,7 @@ from config import (
     GET_ID_FOR_HWID_VIEW,
 )
 from user_handlers import main_menu, personal_account, start
-from admin_support_tickets import manage_support_tickets, support_dump
+from admin_handlers.support_tickets import manage_support_tickets, support_dump
 
 from .api_keys import (
     api_create_key_start,

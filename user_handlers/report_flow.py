@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/report_flow.py
-
 """
 Модуль для управления диалогом системы поддержки (репортов) со стороны пользователя.
 
@@ -22,7 +20,7 @@ from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler
 # Локальные импорты
 from database.manager import db_manager
 from .core import main_menu, start, _display_main_menu, unknown_text_fallback # Импортируем обработчики из core
-from utils import safe_answer_callback_query # <<< ДОБАВЛЕНА ЭТА СТРОКА
+from common.utils import safe_answer_callback_query # <<< ДОБАВЛЕНА ЭТА СТРОКА
 from config import (
     SUPER_ADMIN_ID,
     CHOOSING_REPORT_ACTION, AWAITING_REPORT_TITLE, VIEWING_USER_REPORTS, AWAITING_USER_REPLY_IN_REPORT
@@ -294,5 +292,3 @@ report_conv_handler = ConversationHandler(
     per_message=False,
     allow_reentry=True
 )
-
-# END OF FILE user_handlers/report_flow.py

@@ -1,5 +1,3 @@
-# START OF FILE api/middleware.py
-
 """
 Middleware для FastAPI.
 
@@ -393,6 +391,3 @@ def setup_audit_logging(app, db_pool_getter: Callable):
         db_pool_getter: Функция для получения пула БД
     """
     app.add_middleware(AuditLoggingMiddleware, db_pool_getter=db_pool_getter)
-
-
-# END OF FILE api/middleware.py

@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/prosecution_complaint_flow.py
-
 """
 Модуль для системы разбора жалоб в прокуратуру (Prosecution Complaint Handler).
 
@@ -39,7 +37,7 @@ from config import (
     PROJECTS_CONFIG, SERVERS_CONFIG
 )
 from database.manager import db_manager
-from utils import (
+from common.utils import (
     sanitize_telegram_html, safe_answer_callback_query,
     get_enabled_servers, get_enabled_projects, send_project_selection_menu
 )
@@ -48,8 +46,8 @@ from prompts import (
     get_pch_clarification_prompt, get_pch_finalization_prompt,
     get_pch_document_prompt
 )
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client
-from remote_parser_client import remote_parse_topic, check_remote_parser_available
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client
+from knowledge.remote_parser import remote_parse_topic, check_remote_parser_available
 from .core import check_and_update_usage, _display_main_menu, unknown_text_fallback
 
 
@@ -3206,6 +3204,3 @@ def get_pch_conv_handler() -> ConversationHandler:
 
 # Экспортируем handler
 pch_conv_handler = get_pch_conv_handler()
-
-
-# END OF FILE user_handlers/prosecution_complaint_flow.py

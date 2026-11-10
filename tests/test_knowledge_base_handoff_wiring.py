@@ -16,8 +16,8 @@ from types import SimpleNamespace
 
 import pytest
 
-import knowledge_base_manager as kb
-from remote_parser_client import SectionDiscoveryResult
+from knowledge import base_manager as kb
+from knowledge.remote_parser import SectionDiscoveryResult
 from services.law_document_handoff import ExactThreadHandoffInvariantError
 
 

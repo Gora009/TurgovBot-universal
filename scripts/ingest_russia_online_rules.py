@@ -10,7 +10,7 @@
   • russia_online_rules_kutuzovsky  — правила Кутузовского.
 
 Обзвон ретривит UNION проектного слоя и слоя выбранного сервера — как на GTA5RP,
-см. LEADERSHIP_PROJECTS в law_sources_data.py и leadership-ветку advice_service.
+см. LEADERSHIP_PROJECTS в knowledge/sources.py и leadership-ветку advice_service.
 
 ⚠️ forum.russia.online закрыт логином целиком: parser-worker должен быть поднят с
 FORUM_RUSSIA_ONLINE_LOGIN/PASSWORD, иначе разделы вернут стену авторизации.
@@ -28,12 +28,12 @@ import asyncio
 import logging
 
 from database.manager import db_manager
-from remote_parser_client import (
+from knowledge.remote_parser import (
     remote_parse_section,
     remote_parse_topic,
     check_remote_parser_available,
 )
-from knowledge_base_manager import save_law_document_to_db
+from knowledge.base_manager import save_law_document_to_db
 from services.indexing_service import index_server_laws
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -131,7 +131,7 @@ async def scrape_sections(server_id: str, section_urls: list[str]) -> int:
 def _init_vertex() -> None:
     """Инициализация genai-клиента (эмбеддинги gemini-embedding-001) — образец ingest_rules.py."""
     import config
-    from rate_limiter import init_client
+    from common.rate_limiter import init_client
     from services.sa_admin import project_id_for
     init_client(
         project_id=project_id_for(config.VERTEX_CREDENTIALS_FILE),

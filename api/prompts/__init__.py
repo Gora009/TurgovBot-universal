@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/__init__.py
-
 """
 Промпты для API-эндпоинтов complaint_analyzer.
 
@@ -54,6 +52,3 @@ from .passport_resolver import (
 from .law_router import (
     get_cms_law_router_prompt,
 )
-
-# END OF FILE api/prompts/__init__.py
-

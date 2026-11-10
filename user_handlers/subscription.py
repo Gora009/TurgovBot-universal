@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/subscription.py
-
 """
 Модуль для управления диалогом о подписке на канал.
 
@@ -15,9 +13,9 @@ from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler
 # Локальные импорты
 import config
 from database.manager import db_manager
-from subscription_manager import check_subscription
+from common.subscription import check_subscription
 from .core import main_menu, start, unknown_text_fallback
-from utils import rate_limited
+from common.utils import rate_limited
 from config import (
     CHECKING_SUBSCRIPTION,
     TELEGRAM_CHANNEL_URL,
@@ -141,5 +139,3 @@ subscription_conv_handler = ConversationHandler(
     per_message=False,
     allow_reentry=True
 )
-
-# END OF FILE user_handlers/subscription.py

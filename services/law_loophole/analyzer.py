@@ -1,5 +1,3 @@
-# START OF FILE services/law_loophole/analyzer.py
-
 """
 Loophole Analyzer (v2-конвейер).
 
@@ -875,7 +873,7 @@ async def make_vertex_model_call(
     Импорт lazy — чтобы unit-тесты могли импортировать analyzer без google-genai.
     """
     from google.genai import types  # type: ignore
-    from rate_limiter import (
+    from common.rate_limiter import (
         execute_vertex_request,
         RequestPriority,
         get_current_client,
@@ -921,6 +919,3 @@ async def make_vertex_model_call(
         # превратился бы в "0 находок" и выдался юзеру как чистый закон + закэшировался.
         # Пробрасываем — analyze_loopholes отличит квотный сбой и сигналит на повтор.
         raise
-
-
-# END OF FILE services/law_loophole/analyzer.py

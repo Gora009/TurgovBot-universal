@@ -1,5 +1,3 @@
-# START OF FILE services/maintenance.py
-
 """
 Режим тех. работ для API оверлея — ЕДИНЫЙ флаг с ботом.
 
@@ -97,6 +95,3 @@ async def maintenance_active_for(user_id: Optional[Any]) -> bool:
     except Exception as e:
         logger.warning("[maintenance] проверка упала (fail-open): %s", e)
         return False
-
-
-# END OF FILE services/maintenance.py

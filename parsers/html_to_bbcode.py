@@ -1,4 +1,3 @@
-# html_to_bbcode.py
 """
 Утилита для конвертации HTML-разметки Telegram в BB-код для форумов.
 
@@ -268,4 +267,3 @@ if __name__ == "__main__":
     bbcode = html_to_bbcode(test_html)
     print("BB-CODE OUTPUT:")
     print(bbcode)
-

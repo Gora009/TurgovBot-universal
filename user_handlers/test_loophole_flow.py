@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/test_loophole_flow.py
-
 """
 Flow анализатора дыр, абузов и противоречий в законке.
 
@@ -34,8 +32,8 @@ from telegram.ext import (
 import config
 from database.manager import db_manager
 from services.device_auth import compute_access_tier
-from subscription_manager import check_subscription
-from utils import (
+from common.subscription import check_subscription
+from common.utils import (
     get_enabled_projects,
     get_enabled_servers,
     safe_answer_callback_query,
@@ -1532,6 +1530,3 @@ test_loophole_conv_handler = ConversationHandler(
     allow_reentry=True,
     name="test_loophole_conv",
 )
-
-
-# END OF FILE user_handlers/test_loophole_flow.py

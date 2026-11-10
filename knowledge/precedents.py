@@ -1,5 +1,3 @@
-# START OF FILE precedents_manager.py
-
 """
 Модуль для управления системой судебных прецедентов и толкований.
 
@@ -26,9 +24,9 @@ from google.genai import types, errors as genai_errors
 import config
 from database.manager import db_manager
 from prompts import get_precedent_summary_prompt, get_precedent_router_prompt
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
-from remote_parser_client import remote_parse_topic, check_remote_parser_available
-from knowledge_base_manager import extract_thread_id_from_url
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, mark_current_region_success, mark_current_region_error
+from knowledge.remote_parser import remote_parse_topic, check_remote_parser_available
+from knowledge.base_manager import extract_thread_id_from_url
 
 # Настройки
 USE_REMOTE_PARSER = True  # Использовать удалённый парсер
@@ -1018,7 +1016,3 @@ async def validate_precedent_uris(server_id: str) -> dict:
 
     logging.info(f"[Precedents] Валидация URI для {server_id}: {stats}")
     return stats
-
-
-# END OF FILE precedents_manager.py
-

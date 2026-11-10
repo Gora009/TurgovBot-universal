@@ -1,5 +1,3 @@
-# START OF FILE services/law_search_service.py
-
 """
 Умный поиск по законке для оверлея: гибрид БЕЗ LLM в рантайме.
 
@@ -5430,5 +5428,3 @@ async def servers_with_catalog() -> List[str]:
     """Серверы с построенным каталогом (для флага search в /servers)."""
     rows = await db_manager.fetch("SELECT DISTINCT server_id FROM law_articles")
     return [r["server_id"] for r in rows]
-
-# END OF FILE services/law_search_service.py

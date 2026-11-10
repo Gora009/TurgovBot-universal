@@ -1,5 +1,3 @@
-# START OF FILE api/routers/web_account.py
-
 """
 Веб «Доступ и бонусы» + «Поддержка» (/v1/web/access, /v1/web/support).
 
@@ -186,6 +184,3 @@ async def support_ticket(request: WebSupportTicketRequest, user: Dict = Depends(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail="Не удалось отправить обращение, попробуйте позже")
     return WebSupportTicketResponse(ok=True)
-
-
-# END OF FILE api/routers/web_account.py

@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/law_router.py
-
 """
 Промпт для RAG-роутера законов для CMS API.
 
@@ -59,7 +57,3 @@ def get_cms_law_router_prompt(complaint_text: str, law_titles_str: str) -> str:
         complaint_text=complaint_text[:3000],  # Ограничиваем размер
         law_titles_str=law_titles_str
     )
-
-
-# END OF FILE api/prompts/law_router.py
-

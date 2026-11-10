@@ -1,5 +1,3 @@
-# START OF FILE api/audit_log.py
-
 """
 API Request Audit Logging Module.
 

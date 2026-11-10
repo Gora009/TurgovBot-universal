@@ -1,5 +1,3 @@
-# START OF FILE database/models.py
-
 """
 SQLAlchemy ORM модели для всех таблиц базы данных.
 
@@ -385,7 +383,3 @@ class LoopholeJob(Base):
         Index('idx_loophole_queue_order', 'status', 'is_out_of_band',
               'priority', 'manual_position', 'created_at'),
     )
-
-
-# END OF FILE database/models.py
-

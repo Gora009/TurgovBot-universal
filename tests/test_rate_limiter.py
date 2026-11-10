@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from google.genai import errors as genai_errors
 
-import rate_limiter as rate_limiter_module
-from rate_limiter import TransientVertexError, VertexAIRateLimiter
+from common import rate_limiter as rate_limiter_module
+from common.rate_limiter import TransientVertexError, VertexAIRateLimiter
 
 
 def _server_error(code: int = 502) -> genai_errors.ServerError:

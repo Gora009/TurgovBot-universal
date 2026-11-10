@@ -1,4 +1,3 @@
-# START OF FILE api/prompts/law_loopholes.py
 # -*- coding: utf-8 -*-
 """
 law_loopholes — runtime-промпты анализатора дыр/абузов внутриигровой законки
@@ -732,4 +731,3 @@ def get_loophole_error_recovery_prompt(bad_model_output: str) -> str:
 # thinking_level="high" явно. Нюанс: уровень "minimal" есть у 3.5 Flash и
 # Flash-Lite, но НЕ у 3.1 Pro. Сэмплинг по-прежнему НЕ задавать.
 #
-# END OF FILE api/prompts/law_loopholes.py

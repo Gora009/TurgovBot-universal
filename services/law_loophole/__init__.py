@@ -1,5 +1,3 @@
-# START OF FILE services/law_loophole/__init__.py
-
 """
 Анализатор дыр, абузов и противоречий в законке RP-серверов.
 

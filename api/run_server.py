@@ -1,5 +1,3 @@
-# START OF FILE api/run_server.py
-
 """
 Скрипт для запуска API сервера.
 
@@ -95,6 +93,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# END OF FILE api/run_server.py

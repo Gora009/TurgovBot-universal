@@ -1,5 +1,3 @@
-# START OF FILE services/retrieval_service.py
-
 """
 Семантический ретривал релевантных норм законки (RAG) для голосового ассистента.
 
@@ -22,7 +20,7 @@ from typing import Any, Dict, List, Optional
 
 import config
 from database.manager import db_manager
-from rate_limiter import RequestPriority
+from common.rate_limiter import RequestPriority
 from services.embeddings import embed_one, embed_texts, to_pgvector, TASK_QUERY
 from services.roles import retrieval_bias_terms
 
@@ -235,6 +233,3 @@ def format_chunks_for_prompt(chunks: List[Dict[str, Any]]) -> str:
         src = ch.get("title") or ""
         parts.append(f"[{header}{(' — ' + src) if src and src != header else ''}]\n{ch.get('content', '')}")
     return "\n\n---\n\n".join(parts)
-
-
-# END OF FILE services/retrieval_service.py

@@ -22,7 +22,7 @@ for _path in (str(_ROOT), str(_ROOT / "parser_worker")):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-import law_sources_data  # noqa: E402
+from knowledge import sources as law_sources_data  # noqa: E402
 import worker  # noqa: E402
 from api import url_validator  # noqa: E402
 
@@ -150,7 +150,7 @@ def test_url_validator_allows_russia_online():
 
 
 def test_court_parser_supports_russia_online():
-    import court_case_parser
+    from parsers import court_case as court_case_parser
 
     assert court_case_parser.is_supported_forum_url(
         "https://forum.russia.online/threads/iskovoye-zayavleniye-no-adm-001.7556/"
@@ -209,7 +209,7 @@ def test_prompts_are_not_branded_as_majestic_san_andreas():
 
     branded = re.compile(r"(?i)(majestic\s*RP|san\s*andreas|Сан-Андреас|штат[ае]?\b)")
     offenders = []
-    for path in [_ROOT / "prompts.py", _ROOT / "services" / "roles.py",
+    for path in [_ROOT / "prompts" / "__init__.py", _ROOT / "services" / "roles.py",
                  *sorted((_ROOT / "api" / "prompts").glob("*.py"))]:
         for num, line in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
             if line.strip().startswith("#"):

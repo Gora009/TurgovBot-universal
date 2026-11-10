@@ -1,5 +1,3 @@
-# START OF FILE api/routers/overlay_laws.py
-
 """
 Умный поиск по законке для оверлея (без LLM в рантайме).
 
@@ -242,5 +240,3 @@ async def article(article_id: int, claims: Dict = Depends(get_device_claims)):
             art["penalty_json"] = None
     art.pop("law_document_id", None)
     return LawArticleResponse(**art)
-
-# END OF FILE api/routers/overlay_laws.py

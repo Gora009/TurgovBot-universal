@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/passport_resolver.py
-
 """
 Промпт для определения паспорта среди ссылок (resolvePassportUrlFromCandidates).
 
@@ -31,7 +29,3 @@ def get_passport_resolver_prompt(content: str, urls: list) -> str:
 {urls_text}
 
 Определи, какая из ссылок ведёт на ксерокопию паспорта заявителя. Ответь ТОЛЬКО одним JSON-объектом: {{ "passportUrl": "точная ссылка из списка" }} или {{ "passportUrl": null }}, если ни одна не является паспортом."""
-
-
-# END OF FILE api/prompts/passport_resolver.py
-

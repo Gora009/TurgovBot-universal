@@ -1,5 +1,3 @@
-# START OF FILE api/routers/web_auth.py
-
 """
 Веб-вход и ядро сайта TurgovBot (/v1/web/*).
 
@@ -407,7 +405,7 @@ async def ask(request: WebAskRequest, user: Dict = Depends(get_current_web_user)
                 "база знаний (law_documents). Флаг rag=True — есть свод (law_chunks).",
 )
 async def servers(user: Dict = Depends(get_current_web_user)):
-    from utils import get_enabled_projects, get_enabled_servers
+    from common.utils import get_enabled_projects, get_enabled_servers
     from config import PROJECTS_CONFIG, SERVERS_CONFIG
 
     # Серверы с реально доступной базой знаний (есть law_documents с gemini_file_uri).
@@ -540,7 +538,7 @@ async def history_item(item_id: int, user: Dict = Depends(get_current_web_user))
 )
 async def update_template(template: WebQuestionTemplate, user: Dict = Depends(get_current_web_user),
                           _csrf: None = Depends(web_origin_guard)):
-    from utils import get_enabled_projects, get_enabled_servers
+    from common.utils import get_enabled_projects, get_enabled_servers
 
     user_id = user["user_id"]
 
@@ -574,6 +572,3 @@ async def update_template(template: WebQuestionTemplate, user: Dict = Depends(ge
             default_question_type=question_type,
         ),
     )
-
-
-# END OF FILE api/routers/web_auth.py

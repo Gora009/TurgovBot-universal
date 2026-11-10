@@ -1,5 +1,3 @@
-# START OF FILE services/law_loophole/report.py
-
 """
 Локальное (без AI) форматирование финального отчета анализатора в Telegram HTML.
 
@@ -272,6 +270,3 @@ def build_loophole_report_html_doc(report: Dict[str, Any], *, title_suffix: str 
         + f'<footer>{_esc(foot)}</footer></div></body></html>'
     )
     return doc.encode("utf-8")
-
-
-# END OF FILE services/law_loophole/report.py

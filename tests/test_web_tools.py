@@ -1,4 +1,3 @@
-# START OF FILE tests/test_web_tools.py
 """Тесты веб-инструментов сайта (interview/criminal/complaints/assistant/access/support).
 
 Без БД/AI: проверяем регистрацию роутов, чистые функции и инвариант «ленивый импорт
@@ -114,6 +113,3 @@ def test_criminal_parts_match_config():
     import config
     assert config.CRIMINAL_CASE_PARTS_ORDER == ["facts", "charges", "evidence", "demands"]
     assert set(config.CRIMINAL_CASE_PARTS_DISPLAY) == set(config.CRIMINAL_CASE_PARTS_ORDER)
-
-
-# END OF FILE tests/test_web_tools.py

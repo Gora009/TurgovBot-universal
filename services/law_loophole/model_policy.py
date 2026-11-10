@@ -1,5 +1,3 @@
-# START OF FILE services/law_loophole/model_policy.py
-
 """
 Model Policy для анализатора дыр законки.
 
@@ -121,6 +119,3 @@ def reconcile_bundle_profile(bundle: LawContextBundle) -> LawContextBundle:
         doc_count=len(bundle.selected_laws),
     )
     return bundle
-
-
-# END OF FILE services/law_loophole/model_policy.py

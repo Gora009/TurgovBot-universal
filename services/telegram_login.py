@@ -1,5 +1,3 @@
-# START OF FILE services/telegram_login.py
-
 """
 Веб-вход сайта TurgovBot через Telegram Login Widget.
 
@@ -127,6 +125,3 @@ def verify_web_session(token: str) -> dict | None:
     if claims.get("typ") != "web":
         return None
     return claims
-
-
-# END OF FILE services/telegram_login.py

@@ -1,5 +1,3 @@
-# START OF FILE api/routers/__init__.py
-
 """
 API роутеры.
 """
@@ -22,5 +20,3 @@ __all__ = ['qa_router', 'criminal_case_router', 'complaint_analyzer_router',
            'cms_migration_router', 'overlay_router', 'overlay_laws_router', 'voice_router',
            'auth_router', 'license_router',
            'web_auth_router', 'web_tools_router', 'web_assistant_router', 'web_account_router']
-
-# END OF FILE api/routers/__init__.py

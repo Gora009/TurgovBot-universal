@@ -1,5 +1,3 @@
-# START OF FILE services/qa_v2_service.py
-
 """
 Q&A v2 (эксперимент, админская команда /qa2): новый пайплайн юрконсультанта.
 
@@ -25,7 +23,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import config
 from services.qa_context import build_qa_context, ArticleKey
-from prompts_qa_v2 import (
+from prompts.qa_v2 import (
     QA_V2_PROMPT_VERSION,
     get_qa_v2_system_prompt,
     SEARCH_LAWS_TOOL_DESCRIPTION,
@@ -157,8 +155,8 @@ async def ask_question_v2(
         инфраструктура кнопок-повторов v1 тут не нужна.
     """
     from google.genai import types  # ленивый импорт (см. докстринг модуля)
-    from rate_limiter import execute_vertex_request, RequestPriority, get_current_client
-    from utils import reinitialize_vertex_ai
+    from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client
+    from common.utils import reinitialize_vertex_ai
 
     if server_id not in config.SERVERS_CONFIG:
         raise ValueError(f"Неизвестный сервер: {server_id}")
@@ -284,5 +282,3 @@ async def ask_question_v2(
         rounds_used, diag['model_calls'], diag['elapsed_sec'],
     )
     return {'answer': answer, 'diag': diag}
-
-# END OF FILE services/qa_v2_service.py

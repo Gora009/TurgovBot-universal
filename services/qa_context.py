@@ -1,5 +1,3 @@
-# START OF FILE services/qa_context.py
-
 """
 Сборка контекста для Q&A v2 (эксперимент /qa2): ПОДБОРКА СТАТЕЙ вместо целых кодексов.
 
@@ -342,5 +340,3 @@ async def build_qa_context(
         'dropped': dropped,
         'legs': legs,
     }
-
-# END OF FILE services/qa_context.py

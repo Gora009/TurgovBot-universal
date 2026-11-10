@@ -1,5 +1,3 @@
-# START OF FILE services/promo_service.py
-
 """
 Сервис управления промо-акцией «Безлимитные запросы».
 
@@ -138,7 +136,3 @@ def invalidate_cache():
     """Принудительная инвалидация кеша (при изменении из другого места)."""
     _cache['value'] = None
     _cache['fetched_at'] = 0.0
-
-
-# END OF FILE services/promo_service.py
-

@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/core.py
-
 """
 Модуль с базовыми обработчиками и основными функциями навигации.
 """
@@ -14,7 +12,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 
 # Локальные импорты.
 from database.manager import db_manager
-from utils import rate_limited
+from common.utils import rate_limited
 from config import (
     SUPER_ADMIN_ID,
     DAILY_QUESTION_LIMIT, DAILY_INTERVIEW_GEN_LIMIT, DAILY_COMPLAINT_GEN_LIMIT,
@@ -647,5 +645,3 @@ async def unknown_text_fallback(update: Update, context: ContextTypes.DEFAULT_TY
         "ℹ️ Сейчас я жду нажатия на кнопку.\n"
         "Используйте меню выше или нажмите /start для возврата в главное меню."
     )
-
-# END OF FILE user_handlers/core.py

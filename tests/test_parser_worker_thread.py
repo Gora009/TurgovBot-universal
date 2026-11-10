@@ -16,7 +16,7 @@ for path in (str(_ROOT), str(_ROOT / "parser_worker")):
         sys.path.insert(0, path)
 
 import worker  # noqa: E402  (parser_worker/worker.py)
-import court_case_parser as ccp  # noqa: E402
+from parsers import court_case as ccp  # noqa: E402
 
 
 THREAD_HTML = """
@@ -103,7 +103,7 @@ def test_worker_payload_converts_to_case(monkeypatch):
             ],
         }
 
-    import remote_parser_client
+    from knowledge import remote_parser as remote_parser_client
     monkeypatch.setattr(remote_parser_client, "remote_parse_thread", fake_remote)
 
     case = asyncio.run(ccp._case_from_worker(PAGE_URL))
@@ -121,7 +121,7 @@ def test_worker_failure_falls_back(monkeypatch):
     async def fake_remote(url, max_pages=None):
         return None
 
-    import remote_parser_client
+    from knowledge import remote_parser as remote_parser_client
     monkeypatch.setattr(remote_parser_client, "remote_parse_thread", fake_remote)
     # None → parse_court_case_from_url уходит на локальный Playwright-путь
     assert asyncio.run(ccp._case_from_worker(PAGE_URL)) is None

@@ -1,4 +1,3 @@
-# START OF FILE case_file_parser.py
 import asyncio
 import logging
 import re
@@ -119,5 +118,3 @@ async def fetch_case_content_from_url(page: Page | None, url: str) -> str | None
     else:
         logging.warning(f"[CaseParser] Получена неподдерживаемая ссылка: {url}")
         return None
-
-# END OF FILE case_file_parser.py

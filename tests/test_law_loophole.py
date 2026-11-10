@@ -1,4 +1,3 @@
-# START OF FILE tests/test_law_loophole.py
 """
 Unit-тесты для тестового анализатора дыр законки.
 
@@ -920,6 +919,3 @@ def test_metrics_summarize_and_compare():
     assert m["noise_rate"] == 0.5
     cmp = compare_reports(rep_old, rep_new)
     assert cmp["delta"]["chain_rate"] == 1.0 and cmp["delta"]["exploit_chain_count"] == 1
-
-
-# END OF FILE tests/test_law_loophole.py

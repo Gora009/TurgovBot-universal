@@ -1,5 +1,3 @@
-# START OF FILE services/law_loophole/bundle.py
-
 """
 Source Selection Policy + LawContextBundle.
 
@@ -298,6 +296,3 @@ async def build_law_context_bundle(
         bundle.coverage_level = "hybrid"
 
     return _finalize_bundle(bundle)
-
-
-# END OF FILE services/law_loophole/bundle.py

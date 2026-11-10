@@ -1,5 +1,3 @@
-# START OF FILE user_handlers/criminal_case_flow.py
-
 """
 Модуль для системы создания уголовных дел (Criminal Case Writer).
 
@@ -36,7 +34,7 @@ from config import (
     PROJECTS_CONFIG, SERVERS_CONFIG
 )
 from database.manager import db_manager
-from utils import (
+from common.utils import (
     sanitize_telegram_html, safe_answer_callback_query,
     get_enabled_servers, get_enabled_projects, send_project_selection_menu
 )
@@ -44,7 +42,7 @@ from prompts import (
     get_ccw_context_analyzer_prompt,
     get_ccw_draft_generator_prompt, get_ccw_self_review_prompt
 )
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client
 from .core import check_and_update_usage, _display_main_menu, unknown_text_fallback
 
 
@@ -562,7 +560,7 @@ async def recreate_document(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     )
 
     try:
-        from google_docs_exporter import create_criminal_case_document, fill_criminal_case_document
+        from integrations.google_docs import create_criminal_case_document, fill_criminal_case_document
 
         # ТЕСТ: Принудительно очищаем кэш шаблона для свежего анализа
         await db_manager.execute("DELETE FROM system_cache WHERE key = 'ccw_template_structure'")
@@ -1564,7 +1562,7 @@ async def handle_export(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     )
 
     try:
-        from google_docs_exporter import create_criminal_case_document, fill_criminal_case_document
+        from integrations.google_docs import create_criminal_case_document, fill_criminal_case_document
 
         manager = CriminalCaseManager(session_id)
         final_parts = await manager.get_final_parts()
@@ -1874,7 +1872,3 @@ def get_criminal_case_conv_handler() -> ConversationHandler:
 
 # Экспортируем handler
 criminal_case_conv_handler = get_criminal_case_conv_handler()
-
-
-# END OF FILE user_handlers/criminal_case_flow.py
-

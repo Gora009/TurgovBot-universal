@@ -1,5 +1,3 @@
-# START OF FILE services/law_loophole/queue.py
-
 """
 Очередь анализатора дыр в законке.
 
@@ -452,7 +450,7 @@ async def mark_jobs_done(job_ids: List[int]) -> None:
 
 async def _make_router_fn():
     """Создаёт router_fn, использующую существующий vertex pipeline."""
-    from rate_limiter import (
+    from common.rate_limiter import (
         execute_vertex_request,
         RequestPriority,
         get_current_client,
@@ -901,6 +899,3 @@ async def _run_oob_job(application, job_id: int, params: Dict[str, Any], chat_id
     except Exception as e:
         logger.exception("[LOOPHOLE_QUEUE] out-of-band job %s failed", job_id)
         await mark_job_failed(job_id, str(e))
-
-
-# END OF FILE services/law_loophole/queue.py

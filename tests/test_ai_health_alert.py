@@ -1,4 +1,3 @@
-# START OF FILE tests/test_ai_health_alert.py
 """Тесты алертов о критичных сбоях доступа к Vertex (services/ai_health_alert.py).
 
 Покрывают:

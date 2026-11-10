@@ -1380,7 +1380,7 @@ async def replace_auto_synonyms(
 def project_context_for_server(server_id: str) -> str:
     """Project-level dialect, never a per-server ranking rule."""
 
-    from law_sources_data import get_project_for_server
+    from knowledge.sources import get_project_for_server
 
     project_id = get_project_for_server(server_id)
     if project_id == "rmrp":

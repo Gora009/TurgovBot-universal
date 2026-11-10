@@ -1,5 +1,3 @@
-# START OF FILE google_docs_exporter.py
-
 """
 Модуль для работы с Google Docs API.
 
@@ -22,7 +20,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseUpload
 
-from config import BASE_DIR, CCW_TEMPLATE_DOC_ID, CCW_OUTPUT_FOLDER_ID, _resolve_credentials_path
+from config import BASE_DIR, CCW_TEMPLATE_DOC_ID, CCW_OUTPUT_FOLDER_ID, GOOGLE_CREDENTIALS_FILE, _resolve_credentials_path
 
 # Области доступа для Google APIs
 SCOPES = [
@@ -748,6 +746,3 @@ async def create_criminal_case_document(case_number: str) -> Tuple[str, str]:
     make_document_public(doc_id)
 
     return doc_id, doc_url
-
-
-# END OF FILE google_docs_exporter.py

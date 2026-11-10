@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/evidence_labels.py
-
 """
 Промпт для классификации типов доказательств (getEvidenceTypeLabels).
 
@@ -34,7 +32,3 @@ def get_evidence_labels_prompt(text: str, urls: list) -> str:
 
 Формат ответа: {{ "labels": [ {{ "url": "точная ссылка как в списке", "typeLabel": "краткое описание, напр. видео на 20 минут, ссылка на постановление прокуратуры, скриншот переписки" }} ] }}
 Для каждой ссылки из списка укажи один объект. typeLabel — на русском, кратко."""
-
-
-# END OF FILE api/prompts/evidence_labels.py
-

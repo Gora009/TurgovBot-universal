@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/case_file_draft.py
-
 """
 Промпт для генерации черновика кейс-файла (generateCaseFileDraft).
 
@@ -374,7 +372,3 @@ def get_case_file_draft_feedback_prompt(
 Дело — финальный документ: без черновиков, без открытых вопросов, без пометок прокурора в выводе. Повествование от лица прокурора, официальный стиль офиса Генерального прокурора.
 
 Ответь только JSON по заданной схеме, без markdown."""
-
-
-# END OF FILE api/prompts/case_file_draft.py
-

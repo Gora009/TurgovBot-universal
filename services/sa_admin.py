@@ -1,5 +1,3 @@
-# START OF FILE services/sa_admin.py
-
 """
 Горячая смена сервис-аккаунта Vertex/Gemini из админки (ТОЛЬКО суперадмин).
 
@@ -66,7 +64,7 @@ def project_id_for(path: str) -> str:
 def reload_local_vertex() -> Tuple[bool, str]:
     """Переинициализировать genai-клиент В ЭТОМ процессе из активного SA-файла.
     Возвращает (ok, project_id|error)."""
-    from rate_limiter import init_client
+    from common.rate_limiter import init_client
 
     path = config.VERTEX_CREDENTIALS_FILE
     if not os.path.exists(path):
@@ -181,7 +179,7 @@ async def migrate_corpus_to_active_bucket(enabled_only: bool = True, progress_cb
     enabled = None
     if enabled_only:
         try:
-            import law_sources_data
+            from knowledge import sources as law_sources_data
             enabled = set(law_sources_data.get_flat_servers().keys())
         except Exception:
             enabled = None
@@ -247,6 +245,3 @@ async def migrate_corpus_to_active_bucket(enabled_only: bool = True, progress_cb
             stats["errors"] += 1
 
     return stats
-
-
-# END OF FILE services/sa_admin.py

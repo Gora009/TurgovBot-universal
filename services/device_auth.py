@@ -1,5 +1,3 @@
-# START OF FILE services/device_auth.py
-
 """
 Device-auth для десктоп-оверлея: вход по Telegram-подписке/тестер-статусу БЕЗ секрета на клиенте.
 
@@ -346,6 +344,3 @@ def consume_ws_ticket(ticket: str) -> Optional[Dict[str, Any]]:
     if not data or data["exp"] <= _now():
         return None
     return data
-
-
-# END OF FILE services/device_auth.py

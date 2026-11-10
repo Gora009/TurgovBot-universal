@@ -1,5 +1,3 @@
-# START OF FILE services/indexing_service.py
-
 """
 Индексация законки в семантический индекс (law_chunks) для RAG голосового ассистента.
 
@@ -2705,6 +2703,3 @@ async def index_server_laws(server_id: str) -> Dict[str, int]:
         server_id, indexed_docs, total_chunks,
     )
     return {"documents": indexed_docs, "chunks": total_chunks}
-
-
-# END OF FILE services/indexing_service.py

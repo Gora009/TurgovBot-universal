@@ -1,5 +1,3 @@
-# START OF FILE api/schemas.py
-
 """
 Pydantic-модели для валидации запросов и ответов API.
 """
@@ -1345,6 +1343,3 @@ class WebSupportTicketRequest(BaseModel):
 
 class WebSupportTicketResponse(BaseModel):
     ok: bool = True
-
-
-# END OF FILE api/schemas.py

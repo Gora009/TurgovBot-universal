@@ -1186,7 +1186,7 @@ async def test_final_verify_is_overlay_only_when_legacy_rag_is_unavailable(
             "final Overlay verification must not touch RAG/Vertex/Gemini"
         )
 
-    import rate_limiter
+    from common import rate_limiter
     import services.indexing_service as indexing_service
     import services.law_catalog_service as catalog_service
 
@@ -1360,7 +1360,7 @@ async def test_process_releases_catalog_lock_for_worker_and_awaits_smoke(
             "Overlay-only process must not call RAG/Vertex/Gemini"
         )
 
-    import rate_limiter
+    from common import rate_limiter
     import services.indexing_service as indexing_service
     import services.law_catalog_service as catalog_service
 

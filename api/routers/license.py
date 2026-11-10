@@ -1,5 +1,3 @@
-# START OF FILE api/routers/license.py
-
 """
 Лицензирование оверлея по КЛЮЧУ + HWID (заменяет device-code/deep-link).
 
@@ -211,6 +209,3 @@ async def hwid_status(body: HwidStatusRequest, request: Request):
     return await license_service.hwid_status(
         machine_guid=body.machine_guid, disk_serial=body.disk_serial, smbios_uuid=body.smbios_uuid,
     )
-
-
-# END OF FILE api/routers/license.py

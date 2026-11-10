@@ -1,5 +1,3 @@
-# START OF FILE api/dependencies.py
-
 """
 FastAPI Dependencies для инъекции зависимостей.
 
@@ -168,6 +166,3 @@ async def get_current_web_user(request: Request) -> Dict:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     return {"user_id": user_id}
-
-
-# END OF FILE api/dependencies.py

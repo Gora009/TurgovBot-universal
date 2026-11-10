@@ -1,5 +1,3 @@
-# START OF FILE services/stt_phrases.py
-
 """
 Доменный словарь для адаптации распознавания речи (PhraseSet для chirp_3).
 
@@ -71,6 +69,3 @@ def default_phrases(mode: Optional[str] = None) -> List[str]:
             seen.add(p)
             out.append(p)
     return out[:1000]
-
-
-# END OF FILE services/stt_phrases.py

@@ -1,5 +1,3 @@
-# START OF FILE services/advice_service.py
-
 """
 «Мозг» голосового оверлея (Фаза 2): по ситуации/вопросу из транскрипта даёт короткий
 практичный совет по законам сервера со ссылками на статьи.
@@ -23,9 +21,9 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import config
-from rate_limiter import execute_vertex_request, RequestPriority, get_current_client, vertex_rate_limiter
+from common.rate_limiter import execute_vertex_request, RequestPriority, get_current_client, vertex_rate_limiter
 from services.retrieval_service import retrieve, retrieve_multi, format_chunks_for_prompt
-from law_sources_data import leadership_layers
+from knowledge.sources import leadership_layers
 from services.roles import get_role_prompt, normalize_mode
 
 logger = logging.getLogger(__name__)
@@ -776,6 +774,3 @@ async def stream_advice(
         else:
             logger.exception("[ADVICE] stream generation failed")
             yield ("error", {"message": f"Ошибка генерации: {e}"})
-
-
-# END OF FILE services/advice_service.py

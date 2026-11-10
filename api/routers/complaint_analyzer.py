@@ -1,5 +1,3 @@
-# START OF FILE api/routers/complaint_analyzer.py
-
 """
 API эндпоинты для Complaint Analyzer (анализ жалоб для сайта).
 
@@ -1063,6 +1061,3 @@ async def generate_custom_resolution(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Внутренняя ошибка сервера"
         )
-
-
-# END OF FILE api/routers/complaint_analyzer.py

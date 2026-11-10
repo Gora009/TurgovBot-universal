@@ -8,8 +8,8 @@ from telegram.error import BadRequest
 
 import config
 from database.manager import db_manager
-from google_sheets_handler import log_admin_action_to_sheet
-from knowledge_base_manager import (
+from integrations.google_sheets import log_admin_action_to_sheet
+from knowledge.base_manager import (
     update_knowledge_base_for_server,
     update_all_servers_knowledge_base,
 )
@@ -280,7 +280,7 @@ async def sync_precedents_handler(update: Update, context: ContextTypes.DEFAULT_
 
 async def sync_precedents_and_notify_admin(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
     """Асинхронная задача для синхронизации прецедентов с уведомлением админа."""
-    from knowledge_base_manager import sync_precedents_for_all_servers
+    from knowledge.base_manager import sync_precedents_for_all_servers
 
     genai_client = context.bot_data.get('genai_client')
     successful, failed = await sync_precedents_for_all_servers(genai_client, force_update=False)
@@ -370,7 +370,7 @@ async def run_force_precedents_update(update: Update, context: ContextTypes.DEFA
 
 async def force_sync_precedents_and_notify_admin(context: ContextTypes.DEFAULT_TYPE, chat_id: int, server_id: str = None):
     """Асинхронная задача для ПРИНУДИТЕЛЬНОЙ синхронизации прецедентов."""
-    from precedents_manager import sync_precedents_for_server
+    from knowledge.precedents import sync_precedents_for_server
 
     genai_client = context.bot_data.get('genai_client')
 
@@ -389,7 +389,7 @@ async def force_sync_precedents_and_notify_admin(context: ContextTypes.DEFAULT_T
             final_text = f"❌ Ошибка при обновлении прецедентов для сервера {server_id}: {str(e)[:200]}"
     else:
         # Обновляем все серверы с прецедентами
-        from knowledge_base_manager import sync_precedents_for_all_servers
+        from knowledge.base_manager import sync_precedents_for_all_servers
         successful, failed = await sync_precedents_for_all_servers(genai_client, force_update=True)
 
         final_text = f"⚖️💥 **Принудительное обновление прецедентов завершено!**\n\n"

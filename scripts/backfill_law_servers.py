@@ -69,7 +69,7 @@ if str(_ROOT) not in sys.path:
 
 import config
 from database.manager import db_manager
-from law_sources_data import get_flat_servers
+from knowledge.sources import get_flat_servers
 from services.law_smoke_contract import (
     LAW_SMOKE_CLOCK_SKEW_SECONDS,
     LAW_SMOKE_CASE_NAMES,

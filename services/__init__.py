@@ -1,5 +1,3 @@
-# START OF FILE services/__init__.py
-
 """
 Сервисный слой для бизнес-логики.
 
@@ -53,5 +51,3 @@ __all__ = [
     'analyze_complaint',
     'extract_complaint_facts'
 ]
-
-# END OF FILE services/__init__.py

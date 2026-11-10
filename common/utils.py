@@ -1,7 +1,3 @@
-# START OF FILE utils.py
-
-# utils.py (полностью обновленный файл)
-
 # -*- coding: utf-8 -*-
 
 import os
@@ -428,7 +424,7 @@ async def populate_servers_from_config():
 async def get_enabled_servers(project_id: str = None) -> list[str]:
     """
     Возвращает список включенных серверов.
-    Список серверов берётся из конфига (law_sources_data.py),
+    Список серверов берётся из конфига (knowledge/sources.py),
     БД используется только для проверки is_disabled статуса.
 
     Args:
@@ -438,7 +434,7 @@ async def get_enabled_servers(project_id: str = None) -> list[str]:
     Returns:
         Список server_id включенных серверов в порядке из конфига.
     """
-    from law_sources_data import PROJECTS_DATA, get_servers_by_project
+    from knowledge.sources import PROJECTS_DATA, get_servers_by_project
 
     # Получаем список отключенных серверов из БД
     disabled_query = """
@@ -481,14 +477,14 @@ async def get_enabled_servers(project_id: str = None) -> list[str]:
 async def get_enabled_projects() -> list[str]:
     """
     Возвращает список включенных проектов.
-    Список проектов берётся из конфига (law_sources_data.py),
+    Список проектов берётся из конфига (knowledge/sources.py),
     БД используется только для проверки is_disabled статуса.
     Порядок: majestic_rp первый, gta5rp второй.
 
     Returns:
         Список project_id включенных проектов.
     """
-    from law_sources_data import PROJECTS_DATA
+    from knowledge.sources import PROJECTS_DATA
 
     # Получаем список отключенных проектов из БД
     disabled_query = """
@@ -701,5 +697,3 @@ async def retry_with_exponential_backoff(func, max_retries=8, initial_delay=3, m
             pass
 
     raise Exception("Все попытки исчерпаны")
-
-# END OF FILE utils.py

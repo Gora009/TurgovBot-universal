@@ -1,5 +1,3 @@
-# START OF FILE main.py
-
 import asyncio
 from datetime import timedelta, datetime
 import logging
@@ -15,8 +13,8 @@ from concurrent.futures import ProcessPoolExecutor
 # Локальные импорты.
 from database.manager import db_manager
 import config
-from utils import populate_servers_from_config, setup_logging
-from knowledge_base_manager import update_all_servers_knowledge_base
+from common.utils import populate_servers_from_config, setup_logging
+from knowledge.base_manager import update_all_servers_knowledge_base
 from admin_handlers import (
     handle_forwarded_message, admin_conv_handler,  # Импортируем готовый admin_conv_handler
     bypass_kb_protection_handler,
@@ -24,7 +22,7 @@ from admin_handlers import (
     request_vip_info, handle_vip_revision_reply, vip_rev_reply_filter,  # ВИП: отправить на доработку
 )
 from user_handlers.vip_application_flow import vip_application_conv_handler  # анкета ВИП за промокод
-from admin_support_tickets import close_support_ticket  # обращения поддержки (сайт): закрыть из карточки
+from admin_handlers.support_tickets import close_support_ticket  # обращения поддержки (сайт): закрыть из карточки
 
 # >>> НАЧАЛО ИЗМЕНЕНИЙ: ИМПОРТ ИЗ НОВОГО ПАКЕТА user_handlers <<<
 from user_handlers import (
@@ -241,7 +239,7 @@ async def post_init(application: Application) -> None:
             logging.critical(error_message)
             raise FileNotFoundError(error_message)
 
-        from rate_limiter import init_client
+        from common.rate_limiter import init_client
         from services.sa_admin import project_id_for
 
         # project_id берём ИЗ активного сервис-аккаунта (его можно сменить из админки на SA
@@ -274,7 +272,7 @@ async def post_init(application: Application) -> None:
 
         # Режим тех. работ: восстанавливаем сохранённое состояние (переживает рестарт bot/БД).
         try:
-            from utils import get_maintenance_mode
+            from common.utils import get_maintenance_mode
             application.bot_data['maintenance_mode'] = await get_maintenance_mode()
         except Exception:
             application.bot_data['maintenance_mode'] = False
@@ -381,7 +379,7 @@ def main() -> None:
         if update.effective_user.id != SUPER_ADMIN_ID:
             return
 
-        from rate_limiter import vertex_rate_limiter
+        from common.rate_limiter import vertex_rate_limiter
         stats = vertex_rate_limiter.get_stats()
 
         text = "📊 <b>Vertex AI Rate Limiter Status</b>\n\n"
@@ -521,5 +519,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-
-# END OF FILE main.py

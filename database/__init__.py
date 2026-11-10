@@ -1,5 +1,3 @@
-# START OF FILE database/__init__.py
-
 """
 Инициализационный файл для пакета database.
 
@@ -14,5 +12,3 @@ __all__ = [
     'db_manager',
     'assistant_logger',
 ]
-
-# END OF FILE database/__init__.py

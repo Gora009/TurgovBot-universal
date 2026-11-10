@@ -1,5 +1,3 @@
-# START OF FILE api/prompts/passport_ocr.py
-
 """
 Промпт для OCR паспорта (extractPassportData).
 
@@ -86,7 +84,3 @@ def get_passport_ocr_prompt() -> str:
   "readabilityIssues": ["проблемы с читаемостью если есть"],
   "isValid": true/false
 }"""
-
-
-# END OF FILE api/prompts/passport_ocr.py
-
