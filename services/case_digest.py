@@ -300,7 +300,7 @@ async def _ask_model(prompt: str) -> Optional[str]:
     )
 
     model_name = getattr(config, 'ASSISTANT_DIGEST_MODEL_NAME', None) \
-        or getattr(config, 'ASSISTANT_ROUTER_MODEL_NAME', 'gemini-3.1-flash-lite')
+        or getattr(config, 'ASSISTANT_ROUTER_MODEL_NAME', 'fast')
 
     async def request():
         client = get_current_client()

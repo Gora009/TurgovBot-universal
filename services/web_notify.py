@@ -72,7 +72,7 @@ def _ext_for(filename: str, content_type: str) -> str:
 async def upload_proof(user_id: int, filename: str, content: bytes, content_type: str) -> str:
     """Загружает пруф в GCS (vip_proofs/<uid>/<uuid>.<ext>) и возвращает подписанную ссылку (7 дней)."""
     def _do() -> str:
-        from google.cloud import storage  # ленивый импорт — тяжёлая зависимость
+        from common import storage  # локальное хранилище (common/storage.py)
         client = storage.Client.from_service_account_json(config.VERTEX_CREDENTIALS_FILE)
         bucket = client.bucket(config.active_gcs_bucket())
         blob_name = f"vip_proofs/{user_id}/{uuid.uuid4().hex}{_ext_for(filename, content_type)}"

@@ -233,28 +233,21 @@ async def post_init(application: Application) -> None:
         await populate_servers_from_config()
         logging.info("Шаг 2/5: Синхронизация серверов завершена.")
 
-        logging.info("Шаг 3/5: Инициализация Vertex AI SDK...")
-        if not os.path.exists(config.VERTEX_CREDENTIALS_FILE):
-            error_message = f"КРИТИЧЕСКАЯ ОШИБКА: Файл учетных данных Vertex AI '{config.VERTEX_CREDENTIALS_FILE}' не найден. Бот не может быть запущен."
-            logging.critical(error_message)
-            raise FileNotFoundError(error_message)
-
+        logging.info("Шаг 3/5: Инициализация LLM-клиента...")
+        from common.llm import settings as llm_settings
         from common.rate_limiter import init_client
-        from services.sa_admin import project_id_for
 
-        # project_id берём ИЗ активного сервис-аккаунта (его можно сменить из админки на SA
-        # из ДРУГОГО проекта — см. services/sa_admin). Фолбэк — config.GCP_PROJECT_ID.
-        _vertex_pid = project_id_for(config.VERTEX_CREDENTIALS_FILE)
-        # Инициализируем единственный клиент Vertex AI (регион "global")
-        client = init_client(
-            project_id=_vertex_pid,
-            credentials_file=config.VERTEX_CREDENTIALS_FILE,
-            region=config.GCP_REGION
-        )
+        if not llm_settings.is_configured():
+            error_message = (
+                "КРИТИЧЕСКАЯ ОШИБКА: не настроена модель. Задайте в .env LLM_BASE_URL, "
+                "LLM_API_KEY и LLM_SMART_MODEL (см. .env.example). Бот не может быть запущен."
+            )
+            logging.critical(error_message)
+            raise RuntimeError(error_message)
+
+        client = init_client()
         application.bot_data['genai_client'] = client
-        logging.info(
-            f"Шаг 3/5: Vertex AI SDK инициализирован. Регион: {config.GCP_REGION}"
-        )
+        logging.info(f"Шаг 3/5: LLM-клиент готов: {client!r}")
 
         # Активный GCS-бакет (мог быть переопределён при смене проекта/SA — см. services/sa_admin).
         try:

@@ -23,15 +23,19 @@ def _resolve_credentials_path(filename: str) -> str:
 
 
 # --- Ключевые учетные данные и идентификаторы ---
-# Секреты (токены, пароли) — из .env. GCP-настройки (имена файлов, проект,
-# бакет) живут прямо в этом файле: чтобы поменять кред-файл, достаточно
-# залить новый .json в credentials/ и заменить имя ниже — без правки .env.
+# Секреты (токены, ключи) — из .env.
+# Модели: любой OpenAI-совместимый API, переменные LLM_* (см. common/llm/settings.py и
+# .env.example). Google Cloud этой версии бота не нужен.
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
-GCP_PROJECT_ID = 'turgovv5'
+# Наследие Vertex AI: для доступа к Google больше не используются, но имена оставлены —
+# их принимают (и игнорируют) старые вызовы init_client(...) в скриптах.
+GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID', '')
 GCP_REGION = 'global'
-VERTEX_CREDENTIALS_FILE = _resolve_credentials_path('turgovv5-94343fd8ddc7.json')
-GCS_BUCKET_NAME = 'botlaw2'   # дефолтный бакет (исходный проект)
+VERTEX_CREDENTIALS_FILE = _resolve_credentials_path('vertex-credentials.json')
+# Имя «бакета» в URI документов gs://<бакет>/<файл>. Файлы лежат локально в STORAGE_DIR
+# (common/storage.py); имя бакета в путь к файлу не входит и нужно только для формата URI.
+GCS_BUCKET_NAME = os.getenv('STORAGE_BUCKET_NAME', 'local')
 # Активный бакет может быть переопределён при смене проекта (горячая смена SA + перенос законки).
 # Хранится в system_cache('active_gcs_bucket'); грузится на старте обоих процессов, обновляется при свопе.
 # ВАЖНО: все GCS-консьюмеры (загрузка/чистка) должны звать active_gcs_bucket(), а не константу —
@@ -232,11 +236,11 @@ DATABASE_URL_SYNC = f"postgresql+psycopg2://{_db_user}:{_db_pass}@{_db_host}:{_d
 
 # --- Блок для юридических консультаций (основной RAG) ---
 # Модель для маршрутизации (выбора релевантных законов).
-ROUTER_MODEL_NAME = 'gemini-3.1-flash-lite'
+ROUTER_MODEL_NAME = 'fast'
 # Модель для оптимизации вопросов (используем flash вместо pro для снижения нагрузки).
-QUESTION_OPTIMIZER_MODEL_NAME = 'gemini-3-flash-preview'
+QUESTION_OPTIMIZER_MODEL_NAME = 'smart'
 # Основная модель для ответов на юридические вопросы.
-LEGAL_CONSULTANT_MODEL_NAME = 'gemini-3-flash-preview'
+LEGAL_CONSULTANT_MODEL_NAME = 'smart'
 
 # Запасная «слабая» модель для РУЧНОГО разового обхода перегруза.
 # Когда основная модель упирается в 429, под сообщением «AI перегружен» юзеру
@@ -244,14 +248,14 @@ LEGAL_CONSULTANT_MODEL_NAME = 'gemini-3-flash-preview'
 # запрос сюда. У flash-lite своя бОльшая Vertex-квота (60 QPM против голодной
 # preview-квоты flash), поэтому почти всегда свободна. Основная модель этим НЕ
 # меняется — это одноразовый ручной fallback по кнопке.
-WEAK_FALLBACK_MODEL_NAME = os.getenv('WEAK_FALLBACK_MODEL_NAME', 'gemini-3.1-flash-lite')
+WEAK_FALLBACK_MODEL_NAME = os.getenv('WEAK_FALLBACK_MODEL_NAME', 'fast')
 
 # --- Блок для Ролевого Помощника ---
 # НОВАЯ МОДЕЛЬ: Интеллектуальный фильтр законов для Ассистента.
-ASSISTANT_ROUTER_MODEL_NAME = 'gemini-3.1-flash-lite'
+ASSISTANT_ROUTER_MODEL_NAME = 'fast'
 # Основная модель для ведения диалогов в "Ролевом Помощнике".
 # Требует максимальной производительности и большого контекстного окна.
-ROLE_ASSISTANT_MODEL_NAME = 'gemini-3-flash-preview'
+ROLE_ASSISTANT_MODEL_NAME = 'smart'
 # Потолок ответа. Без него длинный разбор упирался в дефолтный лимит вывода и обрывался
 # на MAX_TOKENS: модель возвращала пустой text, а пользователь не получал вообще ничего.
 ASSISTANT_MAX_OUTPUT_TOKENS = int(os.getenv('ASSISTANT_MAX_OUTPUT_TOKENS', '8192'))
@@ -280,7 +284,7 @@ ASSISTANT_LAW_CONTEXT_MAX_CHARS = int(os.getenv('ASSISTANT_LAW_CONTEXT_MAX_CHARS
 ASSISTANT_DIGEST_ENABLED = os.getenv('ASSISTANT_DIGEST_ENABLED', 'true').strip().lower() in ('1', 'true', 'yes')
 # Модель для сжатия. Работа механическая (пересказ без выводов), поэтому дешёвая lite-модель;
 # карта строится редко — только когда дело перерастает лимит истории.
-ASSISTANT_DIGEST_MODEL_NAME = os.getenv('ASSISTANT_DIGEST_MODEL_NAME', 'gemini-3.1-flash-lite')
+ASSISTANT_DIGEST_MODEL_NAME = os.getenv('ASSISTANT_DIGEST_MODEL_NAME', 'fast')
 # Сколько символов резервируется под карту в бюджете истории (и потолок её длины).
 ASSISTANT_DIGEST_MAX_CHARS = int(os.getenv('ASSISTANT_DIGEST_MAX_CHARS', '12000'))
 # Потолок исходника для одного сжатия. Больше этого объёма за раз не отправляем: карта
@@ -292,21 +296,21 @@ ASSISTANT_DIGEST_MAX_PASSES = int(os.getenv('ASSISTANT_DIGEST_MAX_PASSES', '2'))
 
 # --- Блок для Судебного Помощника ---
 # Основная модель для судебного помощника
-COURT_ASSISTANT_MODEL_NAME = 'gemini-3-flash-preview'
+COURT_ASSISTANT_MODEL_NAME = 'smart'
 # Модель для OCR и анализа изображений (постановления судей)
-COURT_OCR_MODEL_NAME = 'gemini-3.1-flash-lite'
+COURT_OCR_MODEL_NAME = 'vision'
 # Роутер законов для судьи
-COURT_ROUTER_MODEL_NAME = 'gemini-3.1-flash-lite'
+COURT_ROUTER_MODEL_NAME = 'fast'
 
 # --- Блок для системы прецедентов ---
 # Модель для генерации краткого описания прецедентов (быстрая и дешёвая)
-PRECEDENT_SUMMARY_MODEL_NAME = 'gemini-3.1-flash-lite'
+PRECEDENT_SUMMARY_MODEL_NAME = 'fast'
 # Роутер для фильтрации релевантных прецедентов (используем общий роутер)
 PRECEDENT_ROUTER_MODEL_NAME = ROUTER_MODEL_NAME
 
 # --- Блок для прочих функций ---
 # Модель для генерации вопросов для собеседований.
-QUESTION_GENERATOR_MODEL_NAME = 'gemini-3-flash-preview'
+QUESTION_GENERATOR_MODEL_NAME = 'smart'
 
 
 # --- Q&A v2 (ЭКСПЕРИМЕНТ): админская команда /qa2, ТОЛЬКО сервер QA_V2_SERVER_ID ---
@@ -316,7 +320,7 @@ QUESTION_GENERATOR_MODEL_NAME = 'gemini-3-flash-preview'
 # модель сама дозапрашивает недостающие нормы юридически точной формулировкой.
 # Основной пользовательский путь НЕ затронут. Выкатка на всех — после сравнения ответов.
 QA_V2_SERVER_ID = os.getenv('QA_V2_SERVER_ID', 'la_puerta')
-QA_V2_MODEL_NAME = os.getenv('QA_V2_MODEL_NAME', 'gemini-3.5-flash-lite')
+QA_V2_MODEL_NAME = os.getenv('QA_V2_MODEL_NAME', 'fast')
 # thinking_level: minimal/low/medium/high; ПУСТО = не слать thinking (аварийный откат, как
 # LOOPHOLE_THINKING_ENABLED). Было medium; поднято до high по итогам сверки 19 кейсов с
 # законкой: на medium модель «не дочитывает» длинный контекст (кейс r07 — v1 на high дала
@@ -346,15 +350,15 @@ QA_V2_NEIGHBOR_TOP = int(os.getenv('QA_V2_NEIGHBOR_TOP', '12'))
 # Доступен только тестерам и админам через команду /test.
 # Профили моделей: fast / balanced / deep / expert.
 # Не хардкодить эти имена в бизнес-логике — использовать get_loophole_models() из services.law_loophole.model_policy.
-_LOOPHOLE_FLASH_LITE = 'gemini-3.1-flash-lite'
-_LOOPHOLE_FLASH = 'gemini-3-flash-preview'
+_LOOPHOLE_FLASH_LITE = 'fast'
+_LOOPHOLE_FLASH = 'smart'
 # «Модель глубокого тира» (deep/expert analyzer+synthesis+chain+red-team).
 # Было 'gemini-3.1-pro-preview'; заменено на GA 'gemini-3.5-flash' (решение заказчика):
 # с thinking_level="high" (Этап 3) обходит 3.1 Pro на агентных задачах, дешевле и
 # с нормальной прод-квотой. ⚠️ у 3.5-flash дефолтный thinking=MEDIUM → на тяжёлых
 # стадиях ОБЯЗАТЕЛЬНО ставить thinking_level="high" явно (иначе анализ тихо просядет).
 # Имя _LOOPHOLE_PRO оставлено историческим, чтобы не трогать ссылки deep/expert.
-_LOOPHOLE_PRO = 'gemini-3.5-flash'
+_LOOPHOLE_PRO = 'smart'
 
 # fast
 LOOPHOLE_ROUTER_MODEL_FAST = _LOOPHOLE_FLASH_LITE
@@ -448,7 +452,7 @@ LOOPHOLE_DOC_THRESHOLD = 3
 # halfvec(3072)-столбец (миграция не нужна). Чтобы вернуть -2 — переэмбеддить корпус заново
 # (пространства -001 и -2 несовместимы). Код -2 (raw :embedContent + AIMD-пейсер) сохранён в
 # services/embeddings.py под флагом _is_v2_model() — оживёт, если вернуть имя на gemini-embedding-2*.
-EMBEDDING_MODEL_NAME = 'gemini-embedding-001'
+EMBEDDING_MODEL_NAME = 'embed'
 EMBEDDING_DIMENSIONS = 3072           # полная размерность (как у -2; без MRL-усечения → норма не нужна)
 EMBEDDING_PG_TYPE = 'halfvec'         # тип столбца pgvector: halfvec (HNSW до 4000 dims) — для 3072 обычный vector (≤2000) не годится
 EMBEDDING_REGION = 'us-central1'      # -2-preview доступна ТОЛЬКО здесь (global/прочие = 404)
@@ -468,7 +472,7 @@ LAW_INDEX_AUTO_REINDEX = os.getenv('LAW_INDEX_AUTO_REINDEX', 'true').strip().low
 # Офлайн-слой: LLM только при индексации (структура наказаний + синонимы), рантайм — чистый SQL.
 LAW_CATALOG_AUTO_SYNC = os.getenv('LAW_CATALOG_AUTO_SYNC', 'true').strip().lower() in ('1', 'true', 'yes', 'on')
 LAW_CATALOG_AUTO_ENRICH = os.getenv('LAW_CATALOG_AUTO_ENRICH', 'true').strip().lower() in ('1', 'true', 'yes', 'on')
-LAW_CATALOG_ENRICH_MODEL = os.getenv('LAW_CATALOG_ENRICH_MODEL', 'gemini-3.5-flash')  # GA-модель (как loophole) — не жжёт preview-квоту
+LAW_CATALOG_ENRICH_MODEL = os.getenv('LAW_CATALOG_ENRICH_MODEL', 'smart')  # GA-модель (как loophole) — не жжёт preview-квоту
 LAW_ENRICH_BATCH_ARTICLES = int(os.getenv('LAW_ENRICH_BATCH_ARTICLES', '8'))   # статей на один LLM-запрос обогащения
 LAW_ENRICH_INTER_BATCH_DELAY_SECONDS = float(
     os.getenv('LAW_ENRICH_INTER_BATCH_DELAY_SECONDS', '0.2')
@@ -606,9 +610,9 @@ LAW_SEARCH_LOG_SHUTDOWN_TIMEOUT = max(
 )
 
 # --- Голосовой оверлей: советник (Фаза 2) ---
-OVERLAY_ADVICE_MODEL_FAST = os.getenv('OVERLAY_ADVICE_MODEL_FAST', 'gemini-3-flash-preview')   # быстрый совет (стрим); ENV-override для A/B flash↔flash-lite-preview
-OVERLAY_ADVICE_MODEL_DEEP = 'gemini-3.1-pro-preview'   # глубокий разбор по хоткею (из оверлея НЕ вызывается)
-OVERLAY_ADVICE_MODEL_LITE = os.getenv('OVERLAY_ADVICE_MODEL_LITE', 'gemini-3.1-flash-lite')  # A/B-кандидат flash-lite (60 QPM)
+OVERLAY_ADVICE_MODEL_FAST = os.getenv('OVERLAY_ADVICE_MODEL_FAST', 'smart')   # быстрый совет (стрим); ENV-override для A/B flash↔flash-lite-preview
+OVERLAY_ADVICE_MODEL_DEEP = 'smart'   # глубокий разбор по хоткею (из оверлея НЕ вызывается)
+OVERLAY_ADVICE_MODEL_LITE = os.getenv('OVERLAY_ADVICE_MODEL_LITE', 'fast')  # A/B-кандидат flash-lite (60 QPM)
 OVERLAY_REWRITE_MODEL = os.getenv('OVERLAY_REWRITE_MODEL', OVERLAY_ADVICE_MODEL_LITE)  # риврайтер ситуации → поисковые запросы перед ретривалом (дефолт = flash-lite; fail-open при сбое)
 OVERLAY_RETRIEVAL_TOP_K = 14                           # сколько «семян»-чанков берём (потом догружаем статьи целиком)
 OVERLAY_REWRITE_TOPK_PER_QUERY = 6                     # семян на КАЖДЫЙ запрос риврайтера (retrieve_multi: union статей под общий потолок)
@@ -932,12 +936,12 @@ MAX_QUESTIONS = 40
 # --- БЛОК: НАСТРОЙКИ ГЕНЕРАТОРА ЖАЛОБ/ИСКОВ ---
 # Модель для анализатора жалоб (извлечение фактов, определение сложности)
 # Используем flash модель для скорости и дешевизны, так как задача аналитическая
-COMPLAINT_ANALYZER_MODEL_NAME = 'gemini-3-flash-preview'
+COMPLAINT_ANALYZER_MODEL_NAME = 'smart'
 
 # Модель для фильтрации законов при составлении жалоб/исков
-COMPLAINT_ROUTER_MODEL_NAME = 'gemini-3.1-flash-lite'
+COMPLAINT_ROUTER_MODEL_NAME = 'fast'
 # Модель для составления жалоб и исков
-COMPLAINT_GENERATOR_MODEL_NAME = 'gemini-3-flash-preview'
+COMPLAINT_GENERATOR_MODEL_NAME = 'smart'
 
 # Типы документов
 COMPLAINT_TYPES = {
@@ -1011,7 +1015,7 @@ DAILY_COMPLAINT_GEN_LIMIT = 3
 SUBSCRIPTION_BONUS_COMPLAINT_GEN = 7
 
 # --- БЛОК: НАСТРОЙКИ Criminal Case Writer (CCW) ---
-CCW_MODEL_NAME = 'gemini-2.5-pro'
+CCW_MODEL_NAME = 'smart'
 CCW_SESSION_TIMEOUT_HOURS = 24
 CCW_TEMPLATE_DOC_ID = None  # Заглушка, если нет конкретного ID
 
@@ -1031,7 +1035,7 @@ CRIMINAL_CASE_PARTS_DISPLAY = {
 }
 
 # --- БЛОК: НАСТРОЙКИ Prosecution Complaint Handler (PCH) ---
-PCH_MODEL_NAME = 'gemini-2.5-flash'
+PCH_MODEL_NAME = 'smart'
 PCH_SESSION_TIMEOUT_HOURS = 48
 PCH_WARNING_BEFORE_HOURS = 6
 

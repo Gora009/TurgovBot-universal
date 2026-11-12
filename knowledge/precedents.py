@@ -17,7 +17,7 @@ from urllib.parse import urljoin
 
 import httpx
 from bs4 import BeautifulSoup
-from google.cloud import storage
+from common import storage
 from google.api_core import exceptions as google_exceptions
 from google.genai import types, errors as genai_errors
 
@@ -32,7 +32,7 @@ from knowledge.base_manager import extract_thread_id_from_url
 USE_REMOTE_PARSER = True  # Использовать удалённый парсер
 
 # Модель для OCR изображений судебных документов
-OCR_MODEL_NAME = 'gemini-2.0-flash'
+OCR_MODEL_NAME = 'vision'
 
 # Промпт для распознавания текста судебного решения с изображения
 OCR_PRECEDENT_PROMPT = """

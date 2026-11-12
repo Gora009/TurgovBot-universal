@@ -77,23 +77,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"[API] Журнал law-search не запущен, поиск продолжит работу: {e}")
 
-    # Инициализируем Vertex AI для AI-анализа
-    # API запускается как отдельный процесс, поэтому нужна своя инициализация
+    # LLM-клиент для AI-функций API (отдельный процесс — своя инициализация).
+    # Без настроенной модели API всё равно стартует: поиск законов работает без LLM.
     try:
-        import os
-        if os.path.exists(VERTEX_CREDENTIALS_FILE):
-            from services.sa_admin import project_id_for
-            init_client(
-                project_id=project_id_for(VERTEX_CREDENTIALS_FILE),
-                credentials_file=VERTEX_CREDENTIALS_FILE,
-                region=GCP_REGION
-            )
-            logger.info("[API] Vertex AI Client инициализирован")
-        else:
-            logger.warning(f"[API] Файл credentials не найден: {VERTEX_CREDENTIALS_FILE}. AI-анализ будет использовать fallback.")
+        init_client()
     except Exception as e:
-        logger.error(f"[API] Ошибка инициализации Vertex AI: {e}")
-        # Не прерываем запуск - API может работать без AI (fallback на rule-based)
+        logger.error(f"[API] Ошибка инициализации LLM-клиента: {e}")
 
     # Активный GCS-бакет (мог быть переопределён при смене проекта/SA).
     try:

@@ -11,7 +11,7 @@ import httpx
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 # Импорт для работы с Google Cloud Storage
-from google.cloud import storage
+from common import storage
 from google.api_core import exceptions as google_exceptions
 
 # Локальные импорты

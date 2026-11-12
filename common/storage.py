@@ -4,10 +4,12 @@
 (bucket.blob(name) → upload_from_string / download_as_text / exists / delete /
 generate_signed_url), поэтому код синка законов и прецедентов почти не меняется.
 
-Файлы лежат в STORAGE_DIR (по умолчанию data/storage). URI файла — local://<имя>.
-Именно такой URI записывается в law_documents.gemini_file_uri / precedents.gemini_file_uri
-(имя столбца историческое) и передаётся модели: адаптер common.llm подставляет вместо
-URI сам текст документа.
+Файлы лежат в STORAGE_DIR (по умолчанию data/storage). URI файла сохраняет прежний вид
+gs://<бакет>/<имя> (бакет по умолчанию — 'local'): на этом формате держится защита синка
+законов от удаления (проверки префикса, тесты), поэтому схему не меняли. Имя бакета
+в пути к файлу не участвует. Такой URI записывается в law_documents.gemini_file_uri /
+precedents.gemini_file_uri (имена столбцов исторические) и передаётся модели: адаптер
+common.llm подставляет вместо URI сам текст документа.
 
 Ссылки на скачивание (пруфы ВИП, документы уголовных дел) подписываются HMAC и
 отдаются API по маршруту /files/<имя>?exp=..&sig=.. (api/routers/files.py).
@@ -39,7 +41,8 @@ def uri_prefix() -> str:
 
 
 def uri_for(blob_name: str) -> str:
-    return URI_SCHEME + blob_name.lstrip("/")
+    import config
+    return f"gs://{config.active_gcs_bucket()}/{blob_name.lstrip('/')}"
 
 
 def blob_name_from_uri(uri: str) -> Optional[str]:
@@ -138,7 +141,8 @@ class LocalBlob:
 
 
 class LocalBucket:
-    name = "local"
+    def __init__(self, name: str = "local"):
+        self.name = name
 
     def blob(self, name: str) -> LocalBlob:
         return LocalBlob(name)
@@ -149,3 +153,19 @@ _bucket = LocalBucket()
 
 def get_bucket() -> LocalBucket:
     return _bucket
+
+
+class Client:
+    """Замена google.cloud.storage.Client: from_service_account_json(...).bucket(name)."""
+
+    @classmethod
+    def from_service_account_json(cls, *_args, **_kwargs) -> "Client":
+        return cls()
+
+    def bucket(self, name: str) -> LocalBucket:
+        return LocalBucket(name)
+
+
+# Имена типов, как в google.cloud.storage (используются в аннотациях).
+Bucket = LocalBucket
+Blob = LocalBlob

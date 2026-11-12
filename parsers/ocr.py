@@ -235,7 +235,7 @@ async def _download_image_via_worker(image_url: str, referer_url: str) -> Option
 
 async def analyze_court_document_image(
     image_url: str,
-    model_name: str = 'gemini-1.5-flash-002'
+    model_name: str = 'vision'
 ) -> Optional[Dict[str, str]]:
     """
     Анализирует изображение судебного документа с помощью Gemini Vision.
@@ -351,7 +351,7 @@ def _parse_ocr_response(raw_text: str) -> Dict[str, str]:
 
 async def process_multiple_images(
     images: list[Dict[str, str]],
-    model_name: str = 'gemini-1.5-flash-002'
+    model_name: str = 'vision'
 ) -> list[Dict]:
     """
     Обрабатывает несколько изображений с задержками между запросами.

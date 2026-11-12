@@ -168,7 +168,7 @@ async def migrate_corpus_to_active_bucket(enabled_only: bool = True, progress_cb
     уже существовать в новом проекте. enabled_only=True → только сервера из PROJECTS_DATA."""
     import asyncio
     import hashlib
-    from google.cloud import storage
+    from common import storage
 
     bucket_name = config.active_gcs_bucket()
     storage_client = await asyncio.to_thread(

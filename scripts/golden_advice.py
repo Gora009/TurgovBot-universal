@@ -143,23 +143,19 @@ def _load_modules():
 def _init_vertex(cfg) -> None:
     """Инициализация genai-клиента по образцу api/main.py (lifespan)."""
     import os
-    if not os.path.exists(cfg.VERTEX_CREDENTIALS_FILE):
+    from common.llm import settings as _llm_settings
+    if not _llm_settings.is_configured():
         _die(
-            f"файл сервис-аккаунта Vertex не найден: {cfg.VERTEX_CREDENTIALS_FILE}\n"
-            "Без creds генерация и эмбеддинги невозможны — запускай внутри контейнера:\n"
+            "модель не настроена: задайте LLM_BASE_URL / LLM_API_KEY / LLM_SMART_MODEL\n"
+            "Без них генерация и эмбеддинги невозможны — запускай внутри контейнера:\n"
             "  docker compose exec api python -m scripts.golden_advice --mode <...>"
         )
     try:
         from common.rate_limiter import init_client
-        from services.sa_admin import project_id_for
-        init_client(
-            project_id=project_id_for(cfg.VERTEX_CREDENTIALS_FILE),
-            credentials_file=cfg.VERTEX_CREDENTIALS_FILE,
-            region=cfg.GCP_REGION,
-        )
-        print("[golden_advice] Vertex-клиент инициализирован")
+        init_client()
+        print("[golden_advice] LLM-клиент инициализирован")
     except Exception as e:  # noqa: BLE001
-        _die(f"не удалось инициализировать Vertex-клиент: {e}")
+        _die(f"не удалось инициализировать LLM-клиент: {e}")
 
 
 async def _init_db():

@@ -18,10 +18,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Callable, Any, Dict
 
-from google import genai
 from google.genai import errors as genai_errors
 from google.api_core import exceptions as google_exceptions
-from google.oauth2 import service_account
+
+from common.llm import CompatClient, settings as llm_settings
 
 
 class RequestPriority(Enum):
@@ -185,6 +185,9 @@ class VertexAIRateLimiter:
     def _get_qpm_limit(self, model_name: str) -> int:
         """Получает QPM лимит для модели."""
         base_name = self._get_model_base_name(model_name)
+        role_limit = llm_settings.qpm_limit(base_name) if base_name in llm_settings.ROLES else None
+        if role_limit:
+            return role_limit
         return self.MODEL_QPM_LIMITS.get(base_name, 50)  # Default: 50 QPM
 
     def _get_concurrency(self, base_model: str) -> int:
@@ -505,45 +508,28 @@ class VertexAIRateLimiter:
 
 
 # --- Глобальный клиент Vertex AI (единственный, регион "global") ---
-_genai_client: Optional[genai.Client] = None
+_genai_client: Optional[CompatClient] = None
 
 # Глобальный экземпляр rate limiter
 vertex_rate_limiter = VertexAIRateLimiter()
 
 
-def init_client(project_id: str, credentials_file: str, region: str = "global") -> genai.Client:
-    """
-    Инициализирует глобальный genai.Client для Vertex AI.
+def init_client(*_args, **_kwargs) -> CompatClient:
+    """Создаёт глобальный клиент модели (OpenAI-совместимый API, см. common.llm).
 
-    Должен быть вызван при старте бота.
-
-    Args:
-        project_id: ID проекта GCP
-        credentials_file: Путь к файлу учётных данных
-        region: Регион GCP (по умолчанию "global")
-
-    Returns:
-        Инициализированный genai.Client
+    Старые аргументы Vertex (project_id, credentials_file, region) принимаются для
+    совместимости вызовов и игнорируются: поставщики и ключи берутся из env LLM_*.
     """
     global _genai_client
-
-    credentials = service_account.Credentials.from_service_account_file(
-        credentials_file,
-        scopes=['https://www.googleapis.com/auth/cloud-platform']
-    )
-
-    _genai_client = genai.Client(
-        vertexai=True,
-        project=project_id,
-        location=region,
-        credentials=credentials
-    )
-
-    logging.info(f"✅ [RATE_LIMITER] Vertex AI Client инициализирован (регион: {region})")
+    _genai_client = CompatClient()
+    if llm_settings.is_configured():
+        logging.info(f"✅ [RATE_LIMITER] LLM-клиент инициализирован: {_genai_client!r}")
+    else:
+        logging.critical("[RATE_LIMITER] LLM не настроен: задайте LLM_BASE_URL, LLM_API_KEY, LLM_SMART_MODEL")
     return _genai_client
 
 
-def get_client() -> genai.Client:
+def get_client() -> CompatClient:
     """
     Возвращает глобальный genai.Client.
 
@@ -553,23 +539,21 @@ def get_client() -> genai.Client:
     Raises:
         RuntimeError: Если клиент не инициализирован
     """
-    if _genai_client is None:
-        raise RuntimeError("genai.Client не инициализирован. Вызовите init_client() при старте бота.")
-    return _genai_client
+    return _genai_client or init_client()
 
 
 # --- Обратная совместимость ---
 # Эти функции оставлены чтобы не ломать импорты в других модулях.
 # Они просто делегируют к get_client().
 
-def get_current_client() -> Optional[genai.Client]:
-    """Возвращает глобальный клиент. Обратная совместимость."""
-    return _genai_client
+def get_current_client() -> Optional[CompatClient]:
+    """Возвращает глобальный клиент (создаёт при первом обращении)."""
+    return _genai_client or init_client()
 
 
-def get_client_for_model(model_name: str) -> Optional[genai.Client]:
-    """Возвращает глобальный клиент. Обратная совместимость."""
-    return _genai_client
+def get_client_for_model(model_name: str) -> Optional[CompatClient]:
+    """Возвращает глобальный клиент. Роль/поставщик выбирается по model_name в самом клиенте."""
+    return _genai_client or init_client()
 
 
 async def mark_current_region_success():

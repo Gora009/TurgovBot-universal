@@ -20,7 +20,6 @@ import asyncpg
 from google import genai
 from google.genai import types, errors as genai_errors
 from google.api_core import exceptions as google_exceptions
-from google.cloud import storage
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, Message
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler, MessageHandler, CommandHandler, filters

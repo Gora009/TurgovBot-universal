@@ -571,25 +571,16 @@ async def notify_super_admin(context, error: Exception, additional_info: str = "
 
 
 async def reinitialize_vertex_ai():
-    """
-    Принудительно ре-инициализирует Vertex AI SDK для обновления токенов доступа.
-    В новом API google.genai это не требуется, так как клиент управляет токенами автоматически.
-    Функция оставлена для обратной совместимости.
-    """
-    try:
-        if not os.path.exists(config.VERTEX_CREDENTIALS_FILE):
-            logging.critical(f"VERTEX_AUTH: Файл учетных данных не найден по пути: {config.VERTEX_CREDENTIALS_FILE}")
-            return False
+    """Проверяет, что модель настроена (имя функции историческое — так её зовут 30+ мест).
 
-        logging.info("VERTEX_AUTH: Проверка Vertex AI SDK (новый API google.genai управляет токенами автоматически)...")
-        logging.info("VERTEX_AUTH: УСПЕХ. Vertex AI SDK работает корректно.")
+    Ключи живут в env (LLM_*), токены обновлять не нужно. False — если не задана хотя бы
+    основная модель: вызывающие показывают пользователю «ошибка настройки AI».
+    """
+    from common.llm import settings as llm_settings
+    if llm_settings.is_configured():
         return True
-    except FileNotFoundError:
-        logging.critical(f"VERTEX_AUTH: КРИТИЧЕСКАЯ ОШИБКА: Файл учетных данных не найден по пути: {config.VERTEX_CREDENTIALS_FILE}")
-        return False
-    except Exception as e:
-        logging.error("VERTEX_AUTH: КРИТИЧЕСКАЯ ОШИБКА при проверке Vertex AI.", exc_info=e)
-        return False
+    logging.critical("LLM: не настроен основной поставщик (LLM_BASE_URL / LLM_API_KEY / LLM_SMART_MODEL)")
+    return False
 
 
 async def retry_with_exponential_backoff(func, max_retries=8, initial_delay=3, max_delay=120, chat_id=None, context=None):
