@@ -51,18 +51,8 @@ def set_active_gcs_bucket(name) -> None:
     global _active_gcs_bucket
     _active_gcs_bucket = (str(name).strip() or None) if name else None
 
-SPREADSHEET_ID = os.getenv('SPREADSHEET_ID', '1HxTfgBWm57l2oKyfGNcLeUb9LqKC2_cZZ7ZKk22DZx8')
-
-# Экспорт уголовного дела в Google Docs (integrations/google_docs.py):
-# шаблон документа и папка Drive для готовых дел. Пусто — экспорт не работает.
-CCW_TEMPLATE_DOC_ID = os.getenv('CCW_TEMPLATE_DOC_ID', '')
-CCW_OUTPUT_FOLDER_ID = os.getenv('CCW_OUTPUT_FOLDER_ID', '')
-
-# --- РАЗДЕЛЕНИЕ КЛЮЧЕЙ GOOGLE ---
-# Путь к файлу для Google Sheets
-GOOGLE_CREDENTIALS_FILE = _resolve_credentials_path('credentials.json')
-# Путь к файлу для Speech-to-Text API
-SPEECH_TO_TEXT_CREDENTIALS_FILE = _resolve_credentials_path('turgovv5-94343fd8ddc7.json')
+# Экспорт уголовного дела в .docx (integrations/case_documents.py): шаблон — путь к .docx
+# в переменной CCW_TEMPLATE_DOCX, ссылки на скачивание — через PUBLIC_BASE_URL/files/...
 
 # --- SOCKS5 ПРОКСИ ДЛЯ СКАЧИВАНИЯ ИЗОБРАЖЕНИЙ ---
 # Формат: host:port:username:password
@@ -709,7 +699,7 @@ def server_display_name(server_id) -> str:
 # Иерархическая структура проектов (для UI выбора проекта)
 PROJECTS_CONFIG = PROJECTS_DATA
 
-ADMIN_LOG_SHEET_NAME = 'Admin_Logs'
+
 ASSISTANT_LOG_SHEET_NAME = 'Assistant_Logs' # <<< НАЗВАНИЕ СТАРОГО ЛОГА (оставим на всякий случай)
 DATA_DIR = os.path.join(BASE_DIR, "data")
 CACHE_DURATION_SECONDS = 24 * 60 * 60

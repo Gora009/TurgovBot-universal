@@ -179,6 +179,7 @@ from .servers import (
     view_precedent_images,
     view_server_precedents,
 )
+from .llm_status import llm_status_view
 from .service_account import (
     sa_bucket_prompt,
     sa_bucket_set,
@@ -269,6 +270,7 @@ admin_conv_handler = ConversationHandler(
             CallbackQueryHandler(manage_promo_menu, pattern='^manage_promo$'),
             # Смена сервис-аккаунта (суперадмин)
             CallbackQueryHandler(sa_change_prompt, pattern='^sa_change$'),
+            CallbackQueryHandler(llm_status_view, pattern='^llm_status$'),
             CallbackQueryHandler(sa_bucket_prompt, pattern='^sa_bucket$'),
         ],
         ADMIN_SA_UPLOAD: [

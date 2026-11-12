@@ -100,7 +100,7 @@ async def reset_api_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def cleanup_gdrive_storage(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Очищает хранилище Google Drive сервисного аккаунта."""
-    from integrations.google_docs import _cleanup_service_account_storage
+    from integrations.case_documents import _cleanup_service_account_storage
 
     query = update.callback_query
     await query.answer("Начинаю очистку...")

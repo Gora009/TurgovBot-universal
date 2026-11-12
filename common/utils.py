@@ -61,7 +61,6 @@ def setup_logging():
     file_handler.setFormatter(log_formatter)
     logger.addHandler(file_handler)
     logging.getLogger('httpx').setLevel(logging.WARNING)
-    logging.getLogger('gspread').setLevel(logging.WARNING)
     # Добавляем логгер для BeautifulSoup, чтобы он не спамил
     logging.getLogger('bs4').setLevel(logging.WARNING)
 

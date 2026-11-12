@@ -8,7 +8,7 @@ from telegram.error import BadRequest
 
 import config
 from database.manager import db_manager
-from integrations.google_sheets import log_admin_action_to_sheet
+from integrations.admin_log import log_admin_action_to_sheet
 from knowledge.base_manager import (
     update_knowledge_base_for_server,
     update_all_servers_knowledge_base,

@@ -12,7 +12,7 @@ from telegram import (
 from telegram.ext import ContextTypes, ConversationHandler
 
 from database.manager import db_manager
-from integrations.google_sheets import log_admin_action_to_sheet
+from integrations.admin_log import log_admin_action_to_sheet
 from config import SUPER_ADMIN_ID, CHOOSING_ACTION
 from services.promo_service import is_promo_active
 from services.tester_applications import count_pending as ta_count_pending
@@ -123,7 +123,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         promo_active = await is_promo_active()
         promo_status = "🟢 ВКЛ" if promo_active else "⚪ ВЫКЛ"
         keyboard.append([InlineKeyboardButton(f"🎉 Промо-акция: {promo_status}", callback_data="manage_promo")])
-        keyboard.append([InlineKeyboardButton("🔑 Сменить сервис-аккаунт", callback_data="sa_change")])
+        keyboard.append([InlineKeyboardButton("🔑 Модели и ключи", callback_data="llm_status")])
 
     keyboard.append([InlineKeyboardButton("◀️ Назад в главное меню", callback_data="main_menu")])
     reply_markup = InlineKeyboardMarkup(keyboard)

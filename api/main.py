@@ -28,7 +28,7 @@ from common.rate_limiter import init_client
 from .schemas import HealthResponse, ErrorResponse
 from .middleware import SecurityHeadersMiddleware, RequestLoggingMiddleware, DynamicCORSMiddleware, DocsProtectionMiddleware
 from .dependencies import set_db_pool, get_db_pool
-from .routers import qa_router, criminal_case_router, complaint_analyzer_router, cms_migration_router, overlay_router, overlay_laws_router, voice_router, auth_router, license_router, web_auth_router, web_tools_router, web_assistant_router, web_account_router
+from .routers import qa_router, criminal_case_router, complaint_analyzer_router, cms_migration_router, overlay_router, overlay_laws_router, voice_router, auth_router, license_router, web_auth_router, web_tools_router, web_assistant_router, web_account_router, files_router
 
 # Настройка логирования
 logging.basicConfig(
@@ -347,6 +347,7 @@ app.include_router(web_auth_router)
 app.include_router(web_tools_router)
 app.include_router(web_assistant_router)
 app.include_router(web_account_router)
+app.include_router(files_router)
 
 
 # === HEALTH CHECK ===

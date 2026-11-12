@@ -15,8 +15,10 @@ from .web_auth import router as web_auth_router
 from .web_tools import router as web_tools_router
 from .web_assistant import router as web_assistant_router
 from .web_account import router as web_account_router
+from .files import router as files_router
 
 __all__ = ['qa_router', 'criminal_case_router', 'complaint_analyzer_router',
            'cms_migration_router', 'overlay_router', 'overlay_laws_router', 'voice_router',
            'auth_router', 'license_router',
-           'web_auth_router', 'web_tools_router', 'web_assistant_router', 'web_account_router']
+           'web_auth_router', 'web_tools_router', 'web_assistant_router', 'web_account_router',
+           'files_router']

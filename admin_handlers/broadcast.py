@@ -10,7 +10,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 from telegram.error import Forbidden, BadRequest, RetryAfter
 
 from database.manager import db_manager
-from integrations.google_sheets import log_admin_action_to_sheet
+from integrations.admin_log import log_admin_action_to_sheet
 from config import (
     BROADCAST_CHOOSE_AUDIENCE,
     BROADCAST_AWAITING_MESSAGE,

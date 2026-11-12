@@ -6,7 +6,7 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, Callbac
 from telegram.ext import ContextTypes
 
 from database.manager import db_manager
-from integrations.google_sheets import log_admin_action_to_sheet
+from integrations.admin_log import log_admin_action_to_sheet
 from config import (
     ADMIN_MANAGE_REPORTS,
     ADMIN_VIEWING_REPORTS_LIST,

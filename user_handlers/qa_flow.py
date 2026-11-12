@@ -11,6 +11,7 @@
 """
 
 import asyncio
+import html
 import logging
 import json
 import re
@@ -558,7 +559,6 @@ async def process_question_and_reply(context: ContextTypes.DEFAULT_TYPE, chat_id
 
         await save_history(chat_id, server_id, 'user', user_question)
         await save_history(chat_id, server_id, 'model', response.text)
-        # ВРЕМЕННО ОТКЛЮЧЕНО: await log_to_google_sheet(chat_id, f"[{server_id}] {user_question}", response.text, q_type)
         context.user_data['is_new_conversation'] = False
 
     except Exception as e:
@@ -962,10 +962,13 @@ async def prompt_for_question(update: Update, context: ContextTypes.DEFAULT_TYPE
     return await _show_question_prompt(update, context)
 
 
-async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user_question = update.message.text
+async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE,
+                          text_override: str | None = None) -> int:
+    """Вопрос пользователя. text_override — текст, распознанный из голосового
+    (объекты Telegram неизменяемы, подменить update.message.text нельзя)."""
+    user_question = text_override if text_override is not None else update.message.text
     if emoji.emoji_count(user_question) > 0:
-        await update.message.reply_text("Ваш вопрос содержит эмодзи. Пожалуйста, отправьте его без них.")
+        await update.effective_message.reply_text("Ваш вопрос содержит эмодзи. Пожалуйста, отправьте его без них.")
         return AWAITING_QUESTION
 
     question_context = await _recover_question_context(update, context)
@@ -975,12 +978,12 @@ async def handle_question(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     can_ask, _ = await check_and_update_usage(update.effective_chat.id, question_type)
     if not can_ask:
-        await update.message.reply_text("Вы достигли дневного лимита вопросов.")
+        await update.effective_message.reply_text("Вы достигли дневного лимита вопросов.")
         await _display_main_menu(update, context, is_new_message=True)
         return ConversationHandler.END
 
     if context.user_data.get('skip_optimization', False):
-        processing_message = await update.message.reply_text("Ваш запрос принят. Готовлю консультацию...")
+        processing_message = await update.effective_message.reply_text("Ваш запрос принят. Готовлю консультацию...")
         asyncio.create_task(run_question_processing_task(context, update.effective_chat.id, user_question,
                                                          question_type,
                                                          server_id, processing_message.message_id))
@@ -1035,39 +1038,48 @@ async def handle_edited_optimized_question(update: Update, context: ContextTypes
 
 
 async def handle_voice_question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """ВРЕМЕННО ОТКЛЮЧЕНО: Обработка голосовых сообщений"""
-    await update.message.reply_text(
-        "⚠️ Функция голосовых сообщений временно отключена.\n\n"
-        "Пожалуйста, отправьте ваш вопрос текстом."
-    )
-    return context.user_data.get('current_state', AWAITING_QUESTION)
+    """Голосовой вопрос: распознаём (роль stt, /audio/transcriptions) и просим подтвердить."""
+    from services.stt_service import stt_configured, transcribe_file
 
-    # ВРЕМЕННО ОТКЛЮЧЕНО:
-    # status_msg = await update.message.reply_text("Получил голосовое, распознаю...")
-    # voice_file = await update.message.voice.get_file()
-    # user_question = await transcribe_voice(bytes(await voice_file.download_as_bytearray()))
-    #
-    # if not user_question:
-    #     await status_msg.edit_text("Не удалось распознать речь. Попробуйте еще раз.")
-    #     return context.user_data.get('current_state', AWAITING_QUESTION)
-    #
-    # context.user_data['transcribed_text'] = user_question
-    # context.user_data['voice_origin_state'] = context.user_data.get('current_state', AWAITING_QUESTION)
-    # keyboard = [[InlineKeyboardButton("✅ Подтвердить", callback_data="confirm_transcription")],
-    #             [InlineKeyboardButton("🔄 Перезаписать", callback_data="rerecord_transcription")],
-    #             [InlineKeyboardButton("✏️ Отредактировать", callback_data="edit_transcription")]]
-    # await status_msg.edit_text(f"<i>Распознано:</i>\n\n«{user_question}»\n\nВерно?",
-    #                            reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
-    # return AWAITING_TRANSCRIPTION_CONFIRMATION
+    origin_state = context.user_data.get('current_state', AWAITING_QUESTION)
+    if not stt_configured():
+        await update.message.reply_text(
+            "⚠️ Голосовые вопросы не настроены. Пожалуйста, отправьте вопрос текстом."
+        )
+        return origin_state
+
+    status_msg = await update.message.reply_text("Получил голосовое, распознаю...")
+    try:
+        voice_file = await update.message.voice.get_file()
+        audio = bytes(await voice_file.download_as_bytearray())
+        user_question = await transcribe_file(audio, filename="voice.ogg", mime="audio/ogg")
+    except Exception:
+        logging.exception("[VOICE] не удалось распознать голосовое")
+        user_question = ""
+
+    if not user_question:
+        await status_msg.edit_text("Не удалось распознать речь. Попробуйте ещё раз или напишите текстом.")
+        return origin_state
+
+    context.user_data['transcribed_text'] = user_question
+    context.user_data['voice_origin_state'] = origin_state
+    keyboard = [[InlineKeyboardButton("✅ Подтвердить", callback_data="confirm_transcription")],
+                [InlineKeyboardButton("🔄 Перезаписать", callback_data="rerecord_transcription")],
+                [InlineKeyboardButton("✏️ Отредактировать", callback_data="edit_transcription")]]
+    await status_msg.edit_text(f"<i>Распознано:</i>\n\n«{html.escape(user_question)}»\n\nВерно?",
+                               reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+    return AWAITING_TRANSCRIPTION_CONFIRMATION
 
 
 async def handle_confirm_transcription(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await safe_answer_callback_query(query)
-    mock_update = Update(update.update_id, message=query.message)
-    mock_update.message.text = context.user_data['transcribed_text']
-    await query.delete_message()
-    return await handle_question(mock_update, context)
+    text = context.user_data.get('transcribed_text') or ''
+    try:
+        await query.edit_message_text(f"🎙 <i>Вопрос:</i> «{html.escape(text)}»", parse_mode='HTML')
+    except BadRequest:
+        pass
+    return await handle_question(update, context, text_override=text)
 
 
 async def handle_rerecord_request(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1096,7 +1108,7 @@ async def back_to_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         [InlineKeyboardButton("✏️ Отредактировать", callback_data="edit_transcription")]
     ]
     await query.edit_message_text(
-        f"<i>Распознано:</i>\n\n«{user_question}»\n\nВерно?",
+        f"<i>Распознано:</i>\n\n«{html.escape(user_question or '')}»\n\nВерно?",
         reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML'
     )
     return AWAITING_TRANSCRIPTION_CONFIRMATION

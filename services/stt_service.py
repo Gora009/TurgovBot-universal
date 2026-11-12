@@ -1,116 +1,186 @@
 """
-STT для голосового оверлея (Фаза 3): потоковое распознавание речи через
-Google Cloud Speech-to-Text v2, модель chirp_3 (ru-RU GA в потоке).
+STT для голосового оверлея через OpenAI-совместимый /audio/transcriptions.
 
-Даёт async-генератор транскрипта по async-потоку аудио-чанков (PCM LINEAR16 16kHz mono).
-Одна streaming-сессия живёт ≤5 мин (лимит API) — «endless streaming» реализуется на стороне
-вызывающего (WS-обработчик переоткрывает сессию каждые config.STT_STREAM_REOPEN_SECONDS).
+Работает с OpenAI (whisper-1, gpt-4o-mini-transcribe), Groq (whisper-large-v3-turbo),
+локальными faster-whisper / whisper.cpp серверами и любым API с тем же эндпоинтом.
+Поставщик — роль `stt` (LLM_STT_BASE_URL / LLM_STT_API_KEY / LLM_STT_MODEL, по
+умолчанию общие LLM_BASE_URL / LLM_API_KEY).
 
-Требования окружения:
-  * pip: google-cloud-speech (в requirements);
-  * включённый Speech-to-Text API на проекте;
-  * роль roles/speech.client у сервис-аккаунта (config.SPEECH_TO_TEXT_CREDENTIALS_FILE).
+Такие API не потоковые: принимают готовый аудиофайл. Поэтому поток PCM (LINEAR16 16 кГц
+mono) режется на фразы по паузам: адаптивный порог громкости отделяет речь от фона,
+после паузы STT_SILENCE_MS (или через STT_MAX_UTTERANCE_SEC) фраза уходит на распознавание
+и возвращается событием {"type": "final", "text": ...}. Промежуточные partial-события
+по умолчанию выключены (каждое — отдельный платный запрос), см. STT_PARTIAL_INTERVAL_SEC.
 
-ВНИМАНИЕ: модуль импортирует google-cloud-speech ЛЕНИВО (внутри функций), поэтому его
-можно импортировать даже там, где либа ещё не установлена. Реальная валидация — с живым аудио.
+Контракт stream_transcribe прежний (его использует services/voice_session.py).
 """
 
 from __future__ import annotations
 
+import io
 import logging
-from typing import AsyncIterator, Dict, List, Optional, Any
+import os
+import wave
+from typing import Any, AsyncIterator, Dict, List, Optional
+
+import httpx
+import numpy as np
 
 import config
+from common.llm import settings as llm_settings
 
 logger = logging.getLogger(__name__)
 
-
-def _speech_endpoint(region: str) -> str:
-    """Региональный эндпоинт Speech v2 (chirp_3 GA в eu/us)."""
-    return f"{region}-speech.googleapis.com"
+_BYTES_PER_SAMPLE = 2  # LINEAR16
 
 
-def _active_stt_project_id() -> str:
-    """Project для recognizer берём ИЗ активного SA-файла (он же VERTEX-файл, перезаписывается
-    при горячей смене сервис-аккаунта), а НЕ из статичного config.GCP_PROJECT_ID. Иначе после
-    свопа на новый проект STT продолжает бить recognizer в старый проект (который мог быть
-    заблокирован/удалён) → 403 CONSUMER_SUSPENDED. Фолбэк — config.GCP_PROJECT_ID."""
+def _env_float(name: str, default: float) -> float:
     try:
-        from services.sa_admin import project_id_for
-        return project_id_for(config.SPEECH_TO_TEXT_CREDENTIALS_FILE)
-    except Exception:
-        return config.GCP_PROJECT_ID
+        return float(os.getenv(name, default))
+    except ValueError:
+        return default
 
 
-def _build_client():
-    """Создаёт SpeechAsyncClient на сервис-аккаунте + региональном эндпоинте."""
-    from google.cloud.speech_v2 import SpeechAsyncClient
-    from google.api_core.client_options import ClientOptions
-    from google.oauth2 import service_account
-
-    creds = service_account.Credentials.from_service_account_file(
-        config.SPEECH_TO_TEXT_CREDENTIALS_FILE,
-        scopes=["https://www.googleapis.com/auth/cloud-platform"],
-    )
-    opts = ClientOptions(api_endpoint=_speech_endpoint(config.STT_REGION))
-    return SpeechAsyncClient(credentials=creds, client_options=opts)
+SILENCE_MS = _env_float("STT_SILENCE_MS", 700)
+MAX_UTTERANCE_SEC = _env_float("STT_MAX_UTTERANCE_SEC", 20)
+MIN_SPEECH_MS = _env_float("STT_MIN_SPEECH_MS", 250)
+PREROLL_MS = _env_float("STT_PREROLL_MS", 300)
+ABS_RMS_THRESHOLD = _env_float("STT_VAD_RMS", 300)       # нижняя граница «речи» (шкала int16)
+NOISE_FACTOR = _env_float("STT_VAD_NOISE_FACTOR", 3.0)  # речь = громче фона во столько раз
+PARTIAL_INTERVAL_SEC = _env_float("STT_PARTIAL_INTERVAL_SEC", 0)  # 0 — без partial-событий
 
 
-def _build_streaming_config(language: str, phrases: Optional[List[str]]):
-    """StreamingRecognitionConfig под chirp_3: ru-RU, LINEAR16 16kHz, interim, пунктуация,
-    SUPERSHORT endpointing, опциональный inline PhraseSet (доменный словарь)."""
-    from google.cloud.speech_v2.types import cloud_speech
+def _rms(pcm: bytes) -> float:
+    usable = len(pcm) - len(pcm) % _BYTES_PER_SAMPLE
+    if usable <= 0:
+        return 0.0
+    samples = np.frombuffer(pcm[:usable], dtype=np.int16).astype(np.float64)
+    return float(np.sqrt(np.mean(samples ** 2)))
 
-    features = cloud_speech.RecognitionFeatures(
-        enable_automatic_punctuation=True,
-    )
 
-    rec_config_kwargs: Dict[str, Any] = dict(
-        explicit_decoding_config=cloud_speech.ExplicitDecodingConfig(
-            encoding=cloud_speech.ExplicitDecodingConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=config.STT_SAMPLE_RATE,
-            audio_channel_count=1,
-        ),
-        language_codes=[language],
-        model=config.STT_MODEL,
-        features=features,
-    )
+def _wav(pcm: bytes, sample_rate: int) -> bytes:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(_BYTES_PER_SAMPLE)
+        w.setframerate(sample_rate)
+        w.writeframes(pcm)
+    return buf.getvalue()
 
-    # Доменный словарь (термины, номера статей, сленг) — inline PhraseSet с boost.
-    if phrases:
-        rec_config_kwargs["adaptation"] = cloud_speech.SpeechAdaptation(
-            phrase_sets=[
-                cloud_speech.SpeechAdaptation.AdaptationPhraseSet(
-                    inline_phrase_set=cloud_speech.PhraseSet(
-                        phrases=[
-                            cloud_speech.PhraseSet.Phrase(value=p, boost=12.0)
-                            for p in phrases[:1000]
-                        ]
-                    )
-                )
-            ]
-        )
 
-    # Эндпоинтинг по голосовой активности (VAD). Без него chirp_3 финализирует только по
-    # «естественной» тишине в конце — поэтому ДЛИННЫЙ НЕПРЕРЫВНЫЙ вопрос (без пауз) не получал
-    # is_final, и клиент «не слышал» вопрос. С VAD сервер сам финализирует через speech_end_timeout
-    # после того, как речь смолкла.
-    # ⚠️ КРИТИЧНО: таймауты ДОЛЖНЫ быть НЕнулевыми — пустой VoiceActivityTimeout() сервер трактует
-    # как мгновенный таймаут и рвёт поток (499 CANCELLED до результатов, проверено живьём). Поэтому
-    # задаём реальный speech_end_timeout (1.2 c — баланс: финализирует после паузы, не режет речь).
-    from google.protobuf import duration_pb2
-    streaming_features = cloud_speech.StreamingRecognitionFeatures(
-        interim_results=True,
-        enable_voice_activity_events=True,
-        voice_activity_timeout=cloud_speech.StreamingRecognitionFeatures.VoiceActivityTimeout(
-            speech_end_timeout=duration_pb2.Duration(seconds=1, nanos=200_000_000),  # 1.2 c
-        ),
-    )
+def _prompt_from_phrases(phrases: Optional[List[str]]) -> str:
+    """Whisper принимает подсказку-контекст (~224 токена): кладём доменные термины."""
+    if not phrases:
+        return ""
+    out, size = [], 0
+    for p in phrases:
+        if size + len(p) + 2 > 600:
+            break
+        out.append(p)
+        size += len(p) + 2
+    return ", ".join(out)
 
-    return cloud_speech.StreamingRecognitionConfig(
-        config=cloud_speech.RecognitionConfig(**rec_config_kwargs),
-        streaming_features=streaming_features,
-    )
+
+def stt_configured() -> bool:
+    return llm_settings.endpoint("stt").configured
+
+
+async def transcribe_pcm(pcm: bytes, *, language: str, prompt: str = "",
+                         sample_rate: Optional[int] = None) -> str:
+    """Распознаёт один фрагмент PCM. Возвращает текст (может быть пустым)."""
+    wav = _wav(pcm, sample_rate or config.STT_SAMPLE_RATE)
+    return await transcribe_file(wav, filename="speech.wav", mime="audio/wav", language=language, prompt=prompt)
+
+
+async def transcribe_file(data_bytes: bytes, *, filename: str, mime: str,
+                          language: Optional[str] = None, prompt: Optional[str] = None) -> str:
+    """Распознаёт готовый аудиофайл (wav, ogg/opus из Telegram, mp3, m4a…)."""
+    ep = llm_settings.endpoint("stt")
+    if not ep.configured:
+        raise RuntimeError("STT не настроен: задайте LLM_STT_MODEL (и LLM_STT_BASE_URL / _API_KEY при необходимости)")
+    language = language or config.STT_LANGUAGE
+    if prompt is None:
+        from services.stt_phrases import default_phrases
+        prompt = _prompt_from_phrases(default_phrases())
+    data = {"model": ep.model, "language": (language or "ru").split("-")[0], "response_format": "json"}
+    if prompt:
+        data["prompt"] = prompt
+    files = {"file": (filename, data_bytes, mime)}
+    headers = dict(llm_settings.extra_headers())
+    if ep.api_key:
+        headers["Authorization"] = f"Bearer {ep.api_key}"
+    async with httpx.AsyncClient(timeout=llm_settings.request_timeout()) as client:
+        resp = await client.post(f"{ep.base_url}/audio/transcriptions", data=data, files=files, headers=headers)
+    if resp.status_code >= 400:
+        raise RuntimeError(f"STT HTTP {resp.status_code}: {resp.text[:300]}")
+    try:
+        return (resp.json().get("text") or "").strip()
+    except ValueError:
+        return resp.text.strip()
+
+
+class _Segmenter:
+    """Режет поток PCM на фразы по паузам (адаптивный порог громкости)."""
+
+    def __init__(self, sample_rate: int):
+        self.rate = sample_rate
+        self.noise: Optional[float] = None  # оценка уровня фона
+        self.preroll = bytearray()
+        self.speech = bytearray()
+        self.in_speech = False
+        self.silence_ms = 0.0
+        self.speech_ms = 0.0
+        self.since_partial_ms = 0.0
+
+    def _ms(self, nbytes: int) -> float:
+        return nbytes / _BYTES_PER_SAMPLE / self.rate * 1000
+
+    def feed(self, chunk: bytes) -> Optional[str]:
+        """Возвращает 'final' (фраза готова), 'partial' (пора промежуточный) или None."""
+        ms = self._ms(len(chunk))
+        level = _rms(chunk)
+        if self.noise is None:
+            self.noise = min(level, ABS_RMS_THRESHOLD)
+        threshold = max(ABS_RMS_THRESHOLD, self.noise * NOISE_FACTOR)
+        loud = level >= threshold
+        if not loud:
+            self.noise = 0.95 * self.noise + 0.05 * level  # фон учим только по тихим кускам
+
+        if not self.in_speech:
+            self.preroll.extend(chunk)
+            max_pre = int(PREROLL_MS / 1000 * self.rate) * _BYTES_PER_SAMPLE
+            if len(self.preroll) > max_pre:
+                del self.preroll[: len(self.preroll) - max_pre]
+            if loud:
+                self.in_speech = True
+                self.speech = bytearray(self.preroll)
+                self.preroll.clear()
+                self.silence_ms = 0.0
+                self.speech_ms = ms
+                self.since_partial_ms = 0.0
+            return None
+
+        self.speech.extend(chunk)
+        if loud:
+            self.silence_ms = 0.0
+            self.speech_ms += ms
+        else:
+            self.silence_ms += ms
+        self.since_partial_ms += ms
+        if self.silence_ms >= SILENCE_MS or self._ms(len(self.speech)) >= MAX_UTTERANCE_SEC * 1000:
+            return "final"
+        if PARTIAL_INTERVAL_SEC > 0 and self.since_partial_ms >= PARTIAL_INTERVAL_SEC * 1000:
+            self.since_partial_ms = 0.0
+            return "partial"
+        return None
+
+    def take(self) -> Optional[bytes]:
+        """Забрать накопленную фразу (None — это был короткий шум, а не речь)."""
+        pcm, enough = bytes(self.speech), self.speech_ms >= MIN_SPEECH_MS
+        self.speech = bytearray()
+        self.in_speech = False
+        self.silence_ms = self.speech_ms = 0.0
+        return pcm if (pcm and enough) else None
 
 
 async def stream_transcribe(
@@ -119,42 +189,42 @@ async def stream_transcribe(
     language: Optional[str] = None,
     phrases: Optional[List[str]] = None,
 ) -> AsyncIterator[Dict[str, Any]]:
-    """Распознаёт ОДИН streaming-сегмент (≤5 мин).
+    """Распознаёт поток PCM LINEAR16 16 кГц mono.
 
-    Принимает async-итератор аудио-чанков (PCM LINEAR16 16kHz mono),
-    отдаёт события: {"type": "partial"|"final", "text": str}.
-    Для endless streaming вызывающий переоткрывает сессию каждые ~4 минуты.
+    Отдаёт события {"type": "final"|"partial", "text": str} — по одному final на фразу.
     """
-    from google.cloud.speech_v2.types import cloud_speech
-
     language = language or config.STT_LANGUAGE
     if not phrases:
-        # Доменный словарь по умолчанию (термины/кодексы/сленг) — повышает точность на RP-юр-домене.
         from services.stt_phrases import default_phrases
         phrases = default_phrases()
-    client = _build_client()
-    recognizer = f"projects/{_active_stt_project_id()}/locations/{config.STT_REGION}/recognizers/_"
-    streaming_config = _build_streaming_config(language, phrases)
+    prompt = _prompt_from_phrases(phrases)
+    seg = _Segmenter(config.STT_SAMPLE_RATE)
 
-    async def request_gen():
-        # Первый запрос — только конфиг.
-        yield cloud_speech.StreamingRecognizeRequest(
-            recognizer=recognizer, streaming_config=streaming_config
-        )
-        async for chunk in audio_chunks:
-            if chunk:
-                yield cloud_speech.StreamingRecognizeRequest(audio=chunk)
+    async def _final(pcm: bytes) -> Optional[Dict[str, Any]]:
+        text = await transcribe_pcm(pcm, language=language, prompt=prompt)
+        return {"type": "final", "text": text} if text else None
 
     try:
-        responses = await client.streaming_recognize(requests=request_gen())
-        async for response in responses:
-            for result in response.results:
-                if not result.alternatives:
-                    continue
-                text = result.alternatives[0].transcript or ""
-                if not text:
-                    continue
-                yield {"type": "final" if result.is_final else "partial", "text": text}
+        async for chunk in audio_chunks:
+            if not chunk:
+                continue
+            state = seg.feed(chunk)
+            if state == "final":
+                pcm = seg.take()
+                if pcm:
+                    ev = await _final(pcm)
+                    if ev:
+                        yield ev
+            elif state == "partial":
+                text = await transcribe_pcm(bytes(seg.speech), language=language, prompt=prompt)
+                if text:
+                    yield {"type": "partial", "text": text}
+        if seg.in_speech:  # поток закончился посреди фразы — дораспознаём хвост
+            pcm = seg.take()
+            if pcm:
+                ev = await _final(pcm)
+                if ev:
+                    yield ev
     except Exception:
-        logger.exception("[STT] streaming_recognize error")
+        logger.exception("[STT] ошибка распознавания")
         raise

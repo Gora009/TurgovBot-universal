@@ -560,7 +560,7 @@ async def recreate_document(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     )
 
     try:
-        from integrations.google_docs import create_criminal_case_document, fill_criminal_case_document
+        from integrations.case_documents import create_criminal_case_document, fill_criminal_case_document
 
         # ТЕСТ: Принудительно очищаем кэш шаблона для свежего анализа
         await db_manager.execute("DELETE FROM system_cache WHERE key = 'ccw_template_structure'")
@@ -1562,7 +1562,7 @@ async def handle_export(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     )
 
     try:
-        from integrations.google_docs import create_criminal_case_document, fill_criminal_case_document
+        from integrations.case_documents import create_criminal_case_document, fill_criminal_case_document
 
         manager = CriminalCaseManager(session_id)
         final_parts = await manager.get_final_parts()

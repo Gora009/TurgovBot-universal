@@ -5,7 +5,7 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler
 
 from database.manager import db_manager
-from integrations.google_sheets import log_admin_action_to_sheet
+from integrations.admin_log import log_admin_action_to_sheet
 from config import MANAGE_LIMITS, GET_ID_FOR_LIMIT_RESET, CONFIRM_RESET_ALL_LIMITS
 
 from .core import admin_panel, request_user_id

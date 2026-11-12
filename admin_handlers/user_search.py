@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 
 import config
 from database.manager import db_manager
-from integrations.google_sheets import log_admin_action_to_sheet
+from integrations.admin_log import log_admin_action_to_sheet
 from config import (
     CHOOSING_ACTION,
     USER_SEARCH_INPUT,

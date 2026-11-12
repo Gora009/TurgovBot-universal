@@ -5,7 +5,7 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes
 
-from integrations.google_sheets import log_admin_action_to_sheet
+from integrations.admin_log import log_admin_action_to_sheet
 from config import MANAGE_PROMO, GET_PROMO_END_DATE
 from services.promo_service import is_promo_active, get_promo_info, set_promo
 
