@@ -97,3 +97,6 @@ Thumbs.db
 .deploytmp/
 .claude/
 /Website design for bot.zip
+
+# --- Локальное хранилище (законы, документы дел, пруфы) ---
+data/storage/

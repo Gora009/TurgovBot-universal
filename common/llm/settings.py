@@ -83,6 +83,16 @@ def request_timeout() -> float:
     return float(_env("LLM_TIMEOUT_SECONDS", "180"))
 
 
+def max_input_chars() -> int:
+    """Потолок символов во входе модели (законы + история + вопрос). 0 — без ограничения.
+
+    По умолчанию 300 000 символов ≈ 100–120 тыс. токенов русского текста — влезает в
+    окно 128K (DeepSeek, GPT-4o, Qwen). Для моделей с окном меньше уменьшите.
+    """
+    raw = _env("LLM_MAX_INPUT_CHARS", "300000")
+    return int(raw) if raw.isdigit() else 300000
+
+
 def json_mode() -> str:
     """Как просить JSON у модели, когда код задал response_mime_type=application/json.
 

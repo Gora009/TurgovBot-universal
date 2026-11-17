@@ -54,7 +54,6 @@ services:
       - ./data:/app/data                      # JSON-данные (сохранность)
       - ./logs:/app/logs                      # Логи
       - ./temp_files:/app/temp_files          # Временные файлы
-      - ./credentials:/app/credentials        # Google credentials (rw: горячая смена сервис-аккаунта из админки)
       - ./updates:/app/updates:ro             # Раздача апдейтов оверлея (manifest+exe) — /test отдаёт .exe файлом из локального тома
     depends_on:
       db:
@@ -85,7 +84,7 @@ services:
     ports:
       - "${API_SERVER_PORT:-8000}:8000"
     volumes:
-      - ./credentials:/app/credentials        # rw: горячая смена сервис-аккаунта (тот же том, что у bot)
+      - ./data/storage:/app/data/storage      # общее хранилище с ботом: законы, .docx дел, пруфы (/files/...)
       - ./logs:/app/logs
       - ./models:/app/models:ro               # локальная модель эмбеддингов поиска (FRIDA) — большой статик-ассет вне образа (том, переживает ре-деплой)
     depends_on:

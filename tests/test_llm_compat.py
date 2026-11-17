@@ -239,3 +239,42 @@ def test_storage_signed_urls(monkeypatch):
     assert not storage.verify("case_documents/b.docx", exp, sig)
     with pytest.raises(ValueError):
         storage.get_bucket().blob("../../etc/passwd")
+
+
+async def test_documents_over_budget_are_dropped_from_the_tail(monkeypatch):
+    monkeypatch.setenv("LLM_MAX_INPUT_CHARS", "2500")
+    bucket = storage.get_bucket()
+    for name in ("a", "b", "c"):
+        bucket.blob(f"srv/{name}.txt").upload_from_string(name.upper() * 1000)
+    rec = install(lambda req, body: chat_reply("ok"))
+    parts = [types.Part.from_uri(file_uri=storage.uri_for(f"srv/{n}.txt"), mime_type="text/plain") for n in "abc"]
+    await client.aio.models.generate_content(model="smart", contents=parts + [types.Part(text="Вопрос")])
+    sent = rec.requests[0][2]["messages"][-1]["content"]
+    assert "A" * 1000 in sent and "B" * 1000 in sent and "C" * 1000 not in sent
+    assert sent.endswith("Вопрос")
+
+
+async def test_budget_zero_means_unlimited(monkeypatch):
+    monkeypatch.setenv("LLM_MAX_INPUT_CHARS", "0")
+    storage.get_bucket().blob("srv/big.txt").upload_from_string("X" * 500_000)
+    rec = install(lambda req, body: chat_reply("ok"))
+    await client.aio.models.generate_content(
+        model="smart", contents=[types.Part.from_uri(file_uri=storage.uri_for("srv/big.txt"), mime_type="text/plain")])
+    assert "X" * 500_000 in rec.requests[0][2]["messages"][-1]["content"]
+
+
+async def test_real_service_runs_through_adapter():
+    """Сквозная проверка: настоящая функция бота (извлечение фактов жалобы) через
+    лимитер и адаптер получает JSON от «поставщика» и разбирает его своим кодом."""
+    from common import rate_limiter
+    from services.complaint_analyzer_service.analysis import extract_complaint_facts
+
+    rate_limiter.init_client()
+    reply = '{"facts": ["Игрок угнал машину"], "requirements": ["Наказать"]}'
+    rec = install(lambda req, body: chat_reply(reply))
+    result = await extract_complaint_facts("nova_new_era", "Жалоба: игрок угнал мою машину, прошу наказать.")
+    assert result["facts"] == ["Игрок угнал машину"]
+    url, _, body = rec.requests[0]
+    assert url == "https://api.example.com/v1/chat/completions"
+    assert body["model"] == "big-model"
+    assert "угнал мою машину" in json.dumps(body, ensure_ascii=False)

@@ -216,8 +216,7 @@ def _to_messages(
                 uri = part.file_data.file_uri or ""
                 text = documents.get(uri)
                 if text is None:
-                    logger.error("[LLM] документ недоступен, пропущен: %s", uri)
-                    continue
+                    continue  # недоступен или не влез в бюджет — залогировано в fit_documents
                 blocks.append({"type": "text", "text": f"=== ДОКУМЕНТ ===\n{text}\n=== КОНЕЦ ДОКУМЕНТА ==="})
             elif part.inline_data is not None:
                 block = _blob_block(part.inline_data)
@@ -280,10 +279,52 @@ def _tools_payload(tools: Any) -> Optional[List[Dict[str, Any]]]:
     return out or None
 
 
+def fit_documents(uris: List[str], documents: Dict[str, str], other_chars: int, budget: int) -> Dict[str, str]:
+    """Оставляет документы в порядке запроса, пока суммарный объём влезает в бюджет.
+
+    Gemini принимал ~1 млн токенов, у большинства других моделей окно 32–200 тыс.
+    Запасной путь «роутер ничего не выбрал → все законы сервера» иначе упирался бы в
+    ошибку контекста. Порядок URI = порядок, в котором их положил код (сначала законы,
+    выбранные роутером, потом прецеденты), поэтому отбрасываются хвостовые документы.
+    """
+    missing = [u for u in uris if u not in documents]
+    if missing:
+        logger.error("[LLM] документы недоступны, пропущены: %s", missing)
+    if budget <= 0:
+        return documents
+    kept: Dict[str, str] = {}
+    used = other_chars
+    dropped = []
+    for uri in uris:
+        text = documents.get(uri)
+        if text is None:
+            continue
+        if used + len(text) > budget:
+            dropped.append(uri)
+            continue
+        kept[uri] = text
+        used += len(text)
+    if dropped:
+        logger.warning("[LLM] не влезли в LLM_MAX_INPUT_CHARS=%d: отброшено %d документов из %d",
+                       budget, len(dropped), len(uris))
+    return kept
+
+
+def _plain_chars(contents: List[types.Content], system_text: str) -> int:
+    n = len(system_text or "")
+    for c in contents:
+        for p in c.parts or []:
+            if p.text:
+                n += len(p.text)
+    return n
+
+
 def build_payload(model_name: str, contents: Any, config: Any, documents: Dict[str, str]) -> Tuple[str, Dict[str, Any]]:
     """Собирает тело /chat/completions. Возвращает (роль, payload)."""
     norm = _normalize_contents(contents)
     system_text = _text_of(_cfg(config, "system_instruction"))
+    documents = fit_documents(_collect_uris(norm), documents, _plain_chars(norm, system_text),
+                              settings.max_input_chars())
 
     wants_json = (str(_cfg(config, "response_mime_type", "")) or "").lower() == "application/json"
     schema = _json_schema(_cfg(config, "response_schema") or _cfg(config, "response_json_schema"))
