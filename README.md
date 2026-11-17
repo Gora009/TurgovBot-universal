@@ -142,7 +142,7 @@ DeepSeek не принимает картинки и не делает вект�
 | Сервис | Назначение |
 |---|---|
 | `db` | PostgreSQL 16 с расширением pgvector |
-| `migrate` | Миграции Alembic перед стартом |
+| `migrate` | Миграции Alembic, запускается вручную: `docker compose run --rm migrate` |
 | `bot` | Telegram-бот (`main.py`, python-telegram-bot 22) |
 | `api` | FastAPI (`api/main.py`): оверлей, поиск законов, сайт, скачивание файлов |
 | `law-embedding-worker` | Фоновый расчёт векторов статей локальной моделью FRIDA |
