@@ -187,93 +187,10 @@ PROJECTS_DATA = {
                     "https://forum.gta5rp.com/threads/normativnye-akty-shtata-san-andreas.2879500/"
                 ]
             },
-            "strawberry": {
-                "display_name": "Strawberry",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.102/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/informacija-ob-izmenenijax-v-zakonodatelnoi-baze.258464/"
-                ]
-            },
-            "vinewood": {
-                "display_name": "Vinewood",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.170/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": []
-            },
-            "blackberry": {
-                "display_name": "Blackberry",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.262/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/sudebnye-precedenty.1291064/"
-                ]
-            },
-            "insquad": {
-                "display_name": "Insquad",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.336/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": []
-            },
-            "sunrise": {
-                "display_name": "Sunrise",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.412/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": []
-            },
-            "rainbow": {
-                "display_name": "Rainbow",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.464/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/sa-gov-zakonodatelnaja-baza.2710147/"
-                ]
-            },
-            "richman": {
-                "display_name": "Richman",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.530/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/igrovoi-sait-laws-gov.3346313/",
-                    "https://forum.gta5rp.com/threads/postanovlenija-zakonodatelnogo-sobranija.1938650/",
-                    "https://forum.gta5rp.com/threads/sudebnye-precedenty-tolkovanie-npa-obzor-sudebnoi-praktiki.936690/",
-                    "https://forum.gta5rp.com/threads/informacija-ob-izmenenijax-v-zakonodatelnoi-baze.934387/"
-                ]
-            },
             "eclipse": {
                 "display_name": "Eclipse",
                 "forum_section_urls": [
                     "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.600/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": []
-            },
-            "la_mesa": {
-                "display_name": "La Mesa",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.651/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": []
-            },
-            "burton": {
-                "display_name": "Burton",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelstvo.861/"
                 ],
                 "parse_only_author_posts": True,
                 "excluded_urls": []
@@ -290,46 +207,6 @@ PROJECTS_DATA = {
                     "https://forum.gta5rp.com/threads/ugolovno-administrativnyi-kodeks-shtata-san-andreas.814371/": {"first_n": 3}
                 }
             },
-            "alta": {
-                "display_name": "Alta",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1013/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": []
-            },
-            "del_perro": {
-                "display_name": "Del Perro",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1163/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/informacija-ob-izmenenijax-v-zakonodatelnoi-baze.1578156/"
-                ]
-            },
-            "davis": {
-                "display_name": "Davis",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1268/"
-                ],
-                "parse_only_author_posts": True,
-                "precedents_registry_url": "https://forum.gta5rp.com/threads/sudebnye-precedenty-i-tolkovanija.1564185/",
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/sudebnye-precedenty-i-tolkovanija.1564185/"
-                ]
-            },
-            "harmony": {
-                "display_name": "Harmony",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1369/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/postanovlenija-kongressa.2412868/",
-                    "https://forum.gta5rp.com/threads/informacija-ob-izmenenijax-v-zakonodatelnoi-baze.1755380/"
-                ]
-            },
             "redwood": {
                 "display_name": "Redwood",
                 "forum_section_urls": [
@@ -337,24 +214,6 @@ PROJECTS_DATA = {
                 ],
                 "parse_only_author_posts": True,
                 "excluded_urls": []
-            },
-            "hawick": {
-                "display_name": "Hawick",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1535/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": []
-            },
-            "grapeseed": {
-                "display_name": "Grapeseed",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1644/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/informacija-ob-izmenenijax-v-zakonodatelnoi-baze.3273338/"
-                ]
             },
             "murrieta": {
                 "display_name": "Murrieta",
@@ -364,46 +223,30 @@ PROJECTS_DATA = {
                 "parse_only_author_posts": True,
                 "excluded_urls": []
             },
-            "vespucci": {
-                "display_name": "Vespucci",
+            "chiliad": {
+                "display_name": "Chiliad",
                 "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1821/"
-                ],
-                "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/informacija-ob-izmenenijax-v-zakonodatelnoi-baze.3290721/"
-                ]
-            },
-            "milton": {
-                "display_name": "Milton",
-                "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1912/"
+                    "https://forum.gta5rp.com/forums/zakonodatel-naya-baza.2133/"
                 ],
                 "parse_only_author_posts": True,
                 "excluded_urls": []
             },
-            "la_puerta": {
-                "display_name": "La Puerta",
+            "mirror": {
+                "display_name": "Mirror",
                 "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.1984/"
+                    "https://forum.gta5rp.com/forums/zakonodatel-naya-baza.2181/"
                 ],
                 "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/sudebnye-precedenty-i-tolkovanija.3364599/"
-                ]
-
+                "excluded_urls": []
             },
-            "senora": {
-                "display_name": "Senora",
+            "blaine": {
+                "display_name": "Blaine",
                 "forum_section_urls": [
-                    "https://forum.gta5rp.com/forums/zakonodatelnaja-baza.2059/"
+                    "https://forum.gta5rp.com/forums/zakonodatel-naya-baza.2232/"
                 ],
                 "parse_only_author_posts": True,
-                "excluded_urls": [
-                    "https://forum.gta5rp.com/threads/normativnye-akty-shtata-san-andreas.3389197/"
-                ]
-
-            }
+                "excluded_urls": []
+            },
         }
     },
     "rmrp": {
@@ -527,15 +370,6 @@ PROJECTS_DATA = {
                     "https://forum.nova-rp.com/threads/404067/",  # USSS → 412077
                 ],
             },
-            "nova_mirage": {
-                "display_name": "Mirage",
-                "forum_section_urls": [
-                    # Законодательство → Нормативно-правовые акты
-                    "https://forum.nova-rp.com/forums/960/"
-                ],
-                "parse_only_author_posts": True,
-                "default_thread_post_override": {"first_n": 1},
-            },
             "nova_horizon": {
                 "display_name": "Horizon",
                 "forum_section_urls": [
@@ -611,9 +445,7 @@ LEADERSHIP_PROJECTS = [
         "project_id": "gta5rp",
         "display_name": "GTA5RP",
         "project_layer": "gta5rp_rules_project",
-        "servers": [
-            {"server_id": "davis", "display_name": "Davis", "rules_layer": "gta5rp_rules_davis"},
-        ],
+        "servers": [],   # сервер Davis закрыт; серверных сводов правил сейчас нет
     },
     {
         # Россия Онлайн: общие правила проекта + «дополнительные серверные правила»

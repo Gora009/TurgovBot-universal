@@ -43,9 +43,9 @@ LAW_TEXT = """Статья 1. Общие положения
 
 
 def test_targets_require_explicit_configured_game_servers():
-    assert phase_a.validate_explicit_targets(["las_vegas", "vinewood"]) == [
+    assert phase_a.validate_explicit_targets(["las_vegas", "redwood"]) == [
         "las_vegas",
-        "vinewood",
+        "redwood",
     ]
     with pytest.raises(phase_a.PhaseAError, match="явный список"):
         phase_a.validate_explicit_targets([])
@@ -455,7 +455,7 @@ def test_checkpoint_is_atomic_resumable_and_target_bound(tmp_path):
     assert loaded.data["servers"]["las_vegas"]["stage"] == "rag"
     assert loaded.data["servers"]["las_vegas"]["details"] == {"chunks": 10}
     with pytest.raises(phase_a.PhaseAError, match="targets"):
-        phase_a.CheckpointStore(path, ["vinewood"])
+        phase_a.CheckpointStore(path, ["redwood"])
 
 
 def test_checkpoint_v4_is_rejected_without_mutating_file(tmp_path):
@@ -689,7 +689,7 @@ async def test_write_run_rejects_multiple_servers_before_mutation(
     async def fake_process(server_id, *, store, options):
         calls.append(server_id)
 
-    targets = ["las_vegas", "vinewood"]
+    targets = ["las_vegas", "redwood"]
     store = phase_a.CheckpointStore(tmp_path / "checkpoint.json", targets)
     monkeypatch.setattr(phase_a, "process_server", fake_process)
 
@@ -1040,7 +1040,7 @@ async def test_catalog_state_detects_shape_and_ownership_corruption(
     elif mutation == "duplicate":
         rows.append({**rows[0], "id": 999})
     else:
-        rows[0]["server_id"] = "vinewood"
+        rows[0]["server_id"] = "redwood"
 
     class FakeDb:
         async def fetch(self, _query, *_args):
@@ -1098,7 +1098,7 @@ def test_source_fingerprint_covers_only_overlay_source_identity():
     assert baseline["snapshot_version"] == 2
     assert baseline["documents"] == 1
     for field, value in (
-        ("server_id", "vinewood"),
+        ("server_id", "redwood"),
         ("source_thread_id", 999),
         ("title", "Другое название"),
         ("content_hash", "changed"),

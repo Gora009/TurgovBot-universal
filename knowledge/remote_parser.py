@@ -4,7 +4,7 @@
 """
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 from typing import Optional
 import httpx
@@ -35,7 +35,21 @@ class SectionDiscoveryResult:
     urls: list[str]
     complete: bool
     error: Optional[str] = None
+    # ID темы → время последнего сообщения (unix); пусто у старого воркера
+    activity: dict = field(default_factory=dict)
 
+
+
+def _parse_activity(raw) -> dict:
+    """{"123": 1700000000} из JSON → {123: 1700000000}; мусор отбрасывается."""
+    activity = {}
+    if isinstance(raw, dict):
+        for key, value in raw.items():
+            try:
+                activity[int(key)] = int(value)
+            except (TypeError, ValueError):
+                continue
+    return activity
 
 class RemoteParserClient:
     """Асинхронный клиент для удалённого парсера"""
@@ -99,6 +113,7 @@ class RemoteParserClient:
                     return SectionDiscoveryResult(
                         urls=list(data.get('urls', [])),
                         complete=True,
+                        activity=_parse_activity(data.get('thread_activity')),
                     )
                 elif data.get('success'):
                     error = "worker did not attest complete discovery"

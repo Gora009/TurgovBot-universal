@@ -6,7 +6,7 @@ import multiprocessing  # <<< НОВЫЙ ИМПОРТ
 from telegram import Update
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters,
-    ContextTypes, CallbackQueryHandler, TypeHandler
+    ContextTypes, CallbackQueryHandler, TypeHandler, ApplicationHandlerStop
 )
 from concurrent.futures import ProcessPoolExecutor
 
@@ -403,6 +403,18 @@ def main() -> None:
     # рубился доступ к оверлею даже у ВИП). group=-1 → срабатывает раньше основных хендлеров
     # и НЕ потребляет апдейт (проходит дальше в group 0). Тело в try/except внутри функции.
     application.add_handler(TypeHandler(Update, reset_stale_block_flag), group=-1)
+
+    # 1.6. Правка уже отправленного сообщения приходит отдельным апдейтом (edited_message),
+    # и CommandHandler/MessageHandler по умолчанию реагируют на него как на новое сообщение.
+    # У такого апдейта update.message = None, поэтому обработчики падали на
+    # update.message.reply_text (например, /admin после правки). Правки бот не обрабатывает:
+    # апдейт гасится до всех остальных групп.
+    async def ignore_edited_updates(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        raise ApplicationHandlerStop
+
+    application.add_handler(
+        MessageHandler(filters.UpdateType.EDITED, ignore_edited_updates), group=-2
+    )
 
     # 2. ConversationHandlers из пакета user_handlers
     # ВАЖНО: ConversationHandler'ы регистрируются первыми, чтобы их fallbacks

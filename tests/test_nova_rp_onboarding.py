@@ -24,14 +24,13 @@ PROJECT_ID = "nova_rp"
 HOST = "forum.nova-rp.com"
 EXPECTED_SERVERS = {
     "nova_new_era": "https://forum.nova-rp.com/forums/1320/",
-    "nova_mirage": "https://forum.nova-rp.com/forums/960/",
     "nova_horizon": "https://forum.nova-rp.com/forums/1478/",
 }
 
 
 # --- Конфиг проекта ---------------------------------------------------------
 
-def test_project_registered_with_three_law_bases():
+def test_project_registered_with_two_law_bases():
     project = sources.PROJECTS_DATA[PROJECT_ID]
     assert project["display_name"] == "NOVA RP"
     assert project["forum_base_url"] == f"https://{HOST}"

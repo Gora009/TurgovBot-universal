@@ -54,6 +54,37 @@ FORUM_LOGINS = {
     },
 }
 
+# Вход по готовой cookie xf_user (сессия своего аккаунта форума) вместо логина и пароля.
+# Значение берётся из браузера как есть, например "123456%2CAbCd...". Если cookie задана,
+# пароль для этого форума не нужен. Подходит и для форумов без FORUM_LOGINS (gta5rp, nova).
+FORUM_COOKIE_ENVS = {
+    'forum.gta5rp.com': 'FORUM_GTA5RP_XF_USER',
+    'forum.majestic-rp.ru': 'FORUM_MAJESTIC_XF_USER',
+    'forum.nova-rp.com': 'FORUM_NOVA_XF_USER',
+    'forum.russia.online': 'FORUM_RUSSIA_ONLINE_XF_USER',
+    'forum.rmrp.ru': 'FORUM_RMRP_XF_USER',
+}
+
+
+def _forum_cookie(host: str) -> Optional[str]:
+    env = FORUM_COOKIE_ENVS.get(host)
+    if not env:
+        return None
+    return (os.environ.get(env, '') or '').strip() or None
+
+
+async def _apply_forum_cookie(context, host: str) -> bool:
+    """Кладёт xf_user из .env в браузерный контекст. True — cookie задана и добавлена."""
+    value = _forum_cookie(host)
+    if not value:
+        return False
+    await context.add_cookies([{
+        'name': 'xf_user', 'value': value, 'domain': host, 'path': '/',
+        'secure': True, 'httpOnly': True, 'sameSite': 'Lax',
+    }])
+    logging.info(f"[Login] {host}: используется cookie xf_user из {FORUM_COOKIE_ENVS[host]}")
+    return True
+
 # === FlareSolverr (обход Cloudflare managed-челленджа на gta5rp-форуме) ===
 # forum.gta5rp.com закрыли за Cloudflare ("Just a moment…", HTTP 403) — headless Playwright палится,
 # cf_clearance не выдаётся. FlareSolverr (отдельный контейнер с undetected-браузером) решает JS-челлендж
@@ -93,7 +124,24 @@ def _parse_host_delays(raw: str) -> dict[str, float]:
 
 # Дефолт 8с: смоук с прод-IP 2026-07-27 выдержал паузу 5с при полной загрузке субресурсов
 # (589 запросов, 0 отказов) — берём 5с × 1.5 запаса. Синк 31 темы ≈ 4 мин при цикле 47ч.
-HOST_FETCH_DELAYS = _parse_host_delays(os.environ.get('HOST_FETCH_DELAYS', 'forum.rmrp.ru:8'))
+# Пауза нужна ВСЕМ форумам, не только RMRP: без неё синк четырёх серверов Majestic шёл
+# до 16 параллельными запросами, и форумы (Majestic, GTA5RP, Россия Онлайн, NOVA)
+# блокировали IP. С паузой каждый форум получает одну загрузку за раз.
+_DEFAULT_HOST_DELAYS = (
+    'forum.rmrp.ru:8,forum.majestic-rp.ru:4,forum.gta5rp.com:4,'
+    'forum.russia.online:4,forum.nova-rp.com:4'
+)
+HOST_FETCH_DELAYS = _parse_host_delays(os.environ.get('HOST_FETCH_DELAYS', _DEFAULT_HOST_DELAYS))
+
+# Хосты, где страница грузится только как HTML (скрипты тоже режутся). У остальных
+# рейт-лимитируемых хостов режутся картинки, стили, шрифты и медиа, а скрипты остаются:
+# JS-проверки (vddos на Majestic) без них не проходят.
+DOCUMENT_ONLY_HOSTS = {
+    h.strip().lower()
+    for h in os.environ.get('DOCUMENT_ONLY_HOSTS', 'forum.rmrp.ru').split(',')
+    if h.strip()
+}
+_HEAVY_RESOURCE_TYPES = {'image', 'stylesheet', 'font', 'media'}
 
 # Кап страниц пагинации для рейт-лимитируемых хостов: throttle × безлимитный обход длинной
 # темы (жалобы парсятся без first_n) иначе гарантированно упирается в REQUEST_TIMEOUT=180с
@@ -142,11 +190,93 @@ def _host_gate(url: str) -> Optional[asyncio.Semaphore]:
     return _host_gates.setdefault(host, asyncio.Semaphore(1))
 
 
+# === Автостоп при блокировке форума ===
+# Когда форум начинает блокировать IP (таймауты, 403/429/5xx подряд), повторные попытки
+# только продлевают блок. После HOST_BREAKER_FAILS ошибок подряд хост «закрывается» на
+# HOST_BREAKER_COOLDOWN_SECONDS: все запросы к нему сразу падают с HostCooldownError, без
+# сети. Если после паузы первый же запрос снова ошибка, пауза удваивается (до максимума).
+# Любой успешный ответ сбрасывает состояние.
+class HostCooldownError(RuntimeError):
+    """Хост временно закрыт автостопом — к нему не обращаемся."""
+
+
+HOST_BREAKER_FAILS = max(1, int(os.environ.get('HOST_BREAKER_FAILS', '3')))
+HOST_BREAKER_COOLDOWN_SECONDS = max(1.0, float(os.environ.get('HOST_BREAKER_COOLDOWN_SECONDS', '900')))
+HOST_BREAKER_MAX_COOLDOWN_SECONDS = max(
+    HOST_BREAKER_COOLDOWN_SECONDS, float(os.environ.get('HOST_BREAKER_MAX_COOLDOWN_SECONDS', '7200'))
+)
+_BLOCK_STATUSES = {403, 429, 502, 503, 504, 520, 521, 522, 523, 524}
+_host_breakers: dict[str, dict] = {}
+
+
+def _host_of(url: str) -> str:
+    return (urlsplit(url).hostname or '').lower()
+
+
+def _breaker_state(host: str) -> dict:
+    return _host_breakers.setdefault(
+        host, {'fails': 0, 'open_until': 0.0, 'cooldown': HOST_BREAKER_COOLDOWN_SECONDS, 'tripped': False}
+    )
+
+
+def host_cooldown_left(url: str) -> float:
+    """Сколько секунд хост ещё закрыт автостопом (0 — открыт)."""
+    state = _host_breakers.get(_host_of(url))
+    return max(0.0, state['open_until'] - time.monotonic()) if state else 0.0
+
+
+def _breaker_check(url: str) -> None:
+    left = host_cooldown_left(url)
+    if left > 0:
+        raise HostCooldownError(
+            f"{_host_of(url)}: автостоп после блокировки, повтор через {int(left // 60) + 1} мин"
+        )
+
+
+def _breaker_success(url: str) -> None:
+    state = _host_breakers.get(_host_of(url))
+    if state and (state['fails'] or state['tripped']):
+        logging.info(f"[Breaker] {_host_of(url)}: форум снова отвечает, автостоп сброшен")
+        _host_breakers.pop(_host_of(url), None)
+
+
+def _breaker_failure(url: str, reason: str) -> None:
+    host = _host_of(url)
+    state = _breaker_state(host)
+    state['fails'] += 1
+    if not state['tripped'] and state['fails'] < HOST_BREAKER_FAILS:
+        return
+    if state['tripped']:
+        state['cooldown'] = min(state['cooldown'] * 2, HOST_BREAKER_MAX_COOLDOWN_SECONDS)
+    state.update(fails=0, tripped=True, open_until=time.monotonic() + state['cooldown'])
+    logging.error(
+        f"[Breaker] {host}: похоже на блокировку ({reason}). Запросы к форуму "
+        f"остановлены на {int(state['cooldown'] // 60)} мин"
+    )
+
+
+async def _goto(page, url: str):
+    """Загрузка страницы рейт-лимитируемого/закрываемого хоста: пауза, автостоп, учёт ответа."""
+    await _host_throttle(url)
+    try:
+        response = await page.goto(url, timeout=45000, wait_until='commit')
+    except Exception as e:
+        _breaker_failure(url, str(e).splitlines()[0][:80] if str(e) else type(e).__name__)
+        raise
+    status = response.status if response is not None else None
+    if status in _BLOCK_STATUSES:
+        _breaker_failure(url, f"HTTP {status}")
+    else:
+        _breaker_success(url)
+    return response
+
+
 async def _host_throttle(url: str) -> None:
     """Выдерживает паузу между загрузками страниц рейт-лимитируемого хоста.
 
     Лок сериализует конкурентные парсинги тем одного хоста (MAX_CONCURRENT_TOPICS=4),
     иначе паузы каждой корутины шли бы параллельно и лимит всё равно срывался."""
+    _breaker_check(url)
     delay = _host_delay_for(url)
     if delay <= 0:
         return
@@ -161,15 +291,19 @@ async def _host_throttle(url: str) -> None:
 
 
 async def _lighten_page(page, url: str) -> None:
-    """Для рейт-лимитируемых хостов оставляем только document-запросы (HTML отдаёт весь текст)."""
+    """Режет лишние запросы страницы рейт-лимитируемого хоста: текст тем целиком в HTML.
+
+    DOCUMENT_ONLY_HOSTS — только сам документ; остальные — без картинок, стилей, шрифтов."""
     if _host_delay_for(url) <= 0:
         return
+    document_only = (urlsplit(url).hostname or '').lower() in DOCUMENT_ONLY_HOSTS
 
     async def _route(route):
-        if route.request.resource_type == 'document':
-            await route.continue_()
-        else:
+        kind = route.request.resource_type
+        if (kind != 'document') if document_only else (kind in _HEAVY_RESOURCE_TYPES):
             await route.abort()
+        else:
+            await route.continue_()
 
     await page.route('**/*', _route)
 
@@ -319,6 +453,8 @@ class ParseSectionResponse(BaseModel):
     # частичный список после сбоя одной из страниц.
     complete: bool = False
     error: Optional[str] = None
+    # ID темы → время последнего сообщения (unix). Старый бот поле игнорирует.
+    thread_activity: dict[int, int] = {}
 
 
 class ParsedTopic(BaseModel):
@@ -630,6 +766,8 @@ async def _is_forum_authed(context, host: str) -> bool:
 async def _login_forum(context, host: str) -> bool:
     """Авторизация на форуме host. Логинится в переданном контексте — cookies
     (xf_user/xf_session) наследуют все последующие страницы этого контекста."""
+    if await _apply_forum_cookie(context, host):
+        return True
     cfg = FORUM_LOGINS.get(host)
     if not cfg:
         return False
@@ -736,7 +874,7 @@ async def init_browser():
     # Авторизация на форумах с закрытой законкой (majestic, russia.online).
     # Не роняем воркер при неудаче отдельного форума — остальные (в т.ч. публичные
     # gta5rp/rmrp) продолжают работать; синк закрытого форума упрётся в защиту БЗ.
-    for _host in FORUM_LOGINS:
+    for _host in dict.fromkeys([*FORUM_LOGINS, *FORUM_COOKIE_ENVS]):
         try:
             await _login_forum(browser_context, _host)
         except Exception as e:
@@ -770,13 +908,34 @@ async def close_browser():
 
 
 # === ФУНКЦИИ ПАРСИНГА ===
-async def parse_section_urls(section_url: str) -> list[str]:
-    """Собирает все URLs тем из раздела форума"""
+_THREAD_ROW_ID = re.compile(r'js-threadListItem-(\d+)')
+
+
+def thread_activity_from_soup(soup) -> dict[int, int]:
+    """ID темы → время последнего сообщения (unix) из списка тем раздела XenForo.
+
+    Бот по нему решает, скачивать ли тему заново: время не изменилось — тема та же."""
+    activity: dict[int, int] = {}
+    for row in soup.select('div.structItem--thread'):
+        m = _THREAD_ROW_ID.search(' '.join(row.get('class') or []))
+        latest = row.select_one('.structItem-cell--latest time[data-time]')
+        if not m or latest is None:
+            continue
+        try:
+            activity[int(m.group(1))] = int(latest.get('data-time'))
+        except (TypeError, ValueError):
+            continue
+    return activity
+
+
+async def parse_section_urls(section_url: str, activity: Optional[dict] = None) -> list[str]:
+    """Собирает все URLs тем из раздела форума. activity (если передан) заполняется
+    временем последнего сообщения каждой темы."""
     global browser_context, stats
 
     # CF-защищённый раздел (gta5rp) → FlareSolverr, минуя Playwright.
     if _is_cf_protected(section_url):
-        return await _parse_section_flaresolverr(section_url)
+        return await _parse_section_flaresolverr(section_url, activity)
 
     if not browser_context:
         raise RuntimeError("Браузер не инициализирован")
@@ -804,12 +963,7 @@ async def parse_section_urls(section_url: str) -> list[str]:
                         # Retry логика
                         for attempt in range(3):
                             try:
-                                await _host_throttle(current_page_url)
-                                response = await page.goto(
-                                    current_page_url,
-                                    timeout=45000,
-                                    wait_until='commit',
-                                )
+                                response = await _goto(page, current_page_url)
                                 await asyncio.sleep(2)
 
                                 content = await page.content()
@@ -826,6 +980,8 @@ async def parse_section_urls(section_url: str) -> list[str]:
                                     )
                                 break
                             except Exception as e:
+                                if isinstance(e, HostCooldownError):
+                                    raise
                                 logging.warning(f"    Попытка {attempt + 1}/3 провалилась: {str(e)[:100]}")
                                 if attempt < 2:
                                     try:
@@ -845,7 +1001,7 @@ async def parse_section_urls(section_url: str) -> list[str]:
                             if _is_login_wall(await page.content()):
                                 logging.warning(f"    {_lh}: login-wall — перелогиниваюсь и повторяю страницу")
                                 await _login_forum(browser_context, _lh)
-                                await page.goto(current_page_url, timeout=45000, wait_until='commit')
+                                await _goto(page, current_page_url)
                                 await asyncio.sleep(2)
                                 await _wait_challenge_passed(page)
 
@@ -868,6 +1024,10 @@ async def parse_section_urls(section_url: str) -> list[str]:
                             await el.get_attribute("href")
                             for el in elements
                         ]
+                        if activity is not None:
+                            activity.update(thread_activity_from_soup(
+                                BeautifulSoup(await page.content(), 'html.parser')
+                            ))
                         all_urls.update(
                             validated_discovery_thread_urls(
                                 page_hrefs,
@@ -951,8 +1111,7 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
                     # Загрузка с retry
                     for attempt in range(3):
                         try:
-                            await _host_throttle(url)
-                            await page.goto(url, timeout=45000, wait_until='commit')
+                            await _goto(page, url)
                             await asyncio.sleep(2)
 
                             content = await page.content()
@@ -960,6 +1119,8 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
                                 raise Exception("Мало контента")
                             break
                         except Exception as e:
+                            if isinstance(e, HostCooldownError):
+                                raise
                             logging.warning(f"    Попытка {attempt + 1}/3: {str(e)[:100]}")
                             if attempt < 2:
                                 try:
@@ -981,8 +1142,7 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
                         if _is_login_wall(await page.content()):
                             logging.warning(f"    {_lh}: login-wall на теме — перелогиниваюсь и повторяю")
                             await _login_forum(browser_context, _lh)
-                            await _host_throttle(url)
-                            await page.goto(url, timeout=45000, wait_until='commit')
+                            await _goto(page, url)
                             await asyncio.sleep(2)
                             await _wait_challenge_passed(page)
 
@@ -1043,11 +1203,12 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
                         if page_num > 1:
                             for attempt in range(3):
                                 try:
-                                    await _host_throttle(current_url)
-                                    await page.goto(current_url, timeout=45000, wait_until='commit')
+                                    await _goto(page, current_url)
                                     await asyncio.sleep(2)
                                     break
                                 except Exception as e:
+                                    if isinstance(e, HostCooldownError):
+                                        raise
                                     if attempt < 2:
                                         try:
                                             await page.close()
@@ -1224,8 +1385,7 @@ async def _thread_page_html(url: str, page) -> Optional[str]:
     relogged = False
     for attempt in range(3):
         try:
-            await _host_throttle(url)
-            await page.goto(url, timeout=45000, wait_until='commit')
+            await _goto(page, url)
             await asyncio.sleep(2)
             if host:
                 await _wait_challenge_passed(page)
@@ -1242,6 +1402,8 @@ async def _thread_page_html(url: str, page) -> Optional[str]:
                 continue
             return html
         except Exception as e:
+            if isinstance(e, HostCooldownError):
+                raise
             logging.warning(f"    [Thread] попытка {attempt + 1}/3 для {url}: {str(e)[:120]}")
             if attempt == 2:
                 raise
@@ -1328,7 +1490,7 @@ async def parse_thread_messages(url: str, max_pages: Optional[int] = None) -> di
 # === ПАРСИНГ CF-ЗАЩИЩЁННЫХ РАЗДЕЛОВ/ТЕМ ЧЕРЕЗ FlareSolverr (gta5rp) ===
 # Полностью изолировано от Playwright/majestic-пути. Источник HTML — FlareSolverr (готовый
 # отрендеренный DOM после решённого CF-челленджа), разбор — тем же BeautifulSoup и селекторами.
-async def _parse_section_flaresolverr(section_url: str) -> list[str]:
+async def _parse_section_flaresolverr(section_url: str, activity: Optional[dict] = None) -> list[str]:
     """Собирает URLs тем раздела CF-форума через FlareSolverr (аналог parse_section_urls)."""
     async with section_semaphore:
         stats['active_section_tasks'] += 1
@@ -1362,6 +1524,8 @@ async def _parse_section_flaresolverr(section_url: str) -> list[str]:
                         f"partial results are unsafe: {current_page_url}"
                     )
                 logging.info(f"    [CF] стр.{page_num}: найдено ссылок {len(elements)}")
+                if activity is not None:
+                    activity.update(thread_activity_from_soup(soup))
                 all_urls.update(
                     validated_discovery_thread_urls(
                         [el.get('href') for el in elements],
@@ -1566,6 +1730,12 @@ async def health_check():
             "configured": bool(FLARESOLVERR_URL),
             "session_ready": _fs_session_ready,
         },
+        # Форумы, закрытые автостопом: хост → секунд до повтора
+        "host_cooldowns": {
+            host: int(state['open_until'] - time.monotonic())
+            for host, state in _host_breakers.items()
+            if state['open_until'] > time.monotonic()
+        },
         "active_tasks": {
             "sections": stats['active_section_tasks'],
             "topics": stats['active_topic_tasks'],
@@ -1604,9 +1774,10 @@ async def api_parse_section(request: ParseSectionRequest):
     stats['total_requests'] += 1
 
     try:
-        urls = await parse_section_urls(request.section_url)
+        activity: dict[int, int] = {}
+        urls = await parse_section_urls(request.section_url, activity)
         stats['successful_requests'] += 1
-        return ParseSectionResponse(urls=urls, success=True, complete=True)
+        return ParseSectionResponse(urls=urls, success=True, complete=True, thread_activity=activity)
     except Exception as e:
         stats['failed_requests'] += 1
         logging.error(f"Ошибка parse-section: {e}")

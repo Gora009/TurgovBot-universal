@@ -148,7 +148,9 @@ async def test_flaresolverr_malformed_thread_anchor_discards_valid_partial_set(
 async def test_worker_api_attests_only_successful_complete_discovery(
     monkeypatch,
 ) -> None:
-    async def complete(_url):
+    async def complete(_url, activity=None):
+        if activity is not None:
+            activity[101] = 1_700_000_000
         return ["https://forum.example/threads/law.101/"]
 
     monkeypatch.setattr(worker, "parse_section_urls", complete)
@@ -164,11 +166,12 @@ async def test_worker_api_attests_only_successful_complete_discovery(
     assert response.success is True
     assert response.complete is True
     assert response.urls == ["https://forum.example/threads/law.101/"]
+    assert response.thread_activity == {101: 1_700_000_000}
 
 
 @pytest.mark.asyncio
 async def test_worker_api_never_attests_failed_discovery(monkeypatch) -> None:
-    async def incomplete(_url):
+    async def incomplete(_url, activity=None):
         raise RuntimeError("page 2 failed")
 
     monkeypatch.setattr(worker, "parse_section_urls", incomplete)

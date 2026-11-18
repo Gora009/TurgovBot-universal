@@ -133,7 +133,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         await update.callback_query.answer()
         await update.callback_query.edit_message_text(text=text, reply_markup=reply_markup)
     else:
-        await update.message.reply_text(text=text, reply_markup=reply_markup)
+        await update.effective_message.reply_text(text=text, reply_markup=reply_markup)
 
     return CHOOSING_ACTION
 

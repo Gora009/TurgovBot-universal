@@ -1,6 +1,8 @@
 import asyncio
+import os
 import re
 import traceback
+from datetime import datetime, timedelta, timezone
 import hashlib
 import logging
 from contextlib import asynccontextmanager
@@ -38,6 +40,45 @@ USE_REMOTE_PARSER = True
 # Увеличение ускоряет процесс, но создает большую нагрузку.
 # Рекомендуемые значения: 3-5
 CONCURRENT_UPDATES = 4
+
+# Полное перечитывание темы, даже если время последнего сообщения не менялось: правка
+# первого поста (частый способ обновить закон) это время не двигает. Срок у каждой темы
+# свой (±25% от базового по ID темы), чтобы перепроверки не шли всплеском по всему серверу.
+# 0 — пропуск неизменённых тем выключен, каждая тема скачивается при каждом синке.
+LAW_FULL_RECHECK_DAYS = max(0.0, float(os.getenv('LAW_FULL_RECHECK_DAYS', '7')))
+
+
+def can_skip_unchanged_topic(record: dict, last_post_at, force_update: bool,
+                             now: datetime | None = None,
+                             recheck_days: float | None = None) -> bool:
+    """Можно ли не скачивать тему: в БД уже есть её текст, время последнего сообщения
+    в списке тем совпадает с сохранённым и полная перепроверка ещё не нужна."""
+    recheck_days = LAW_FULL_RECHECK_DAYS if recheck_days is None else recheck_days
+    if force_update or recheck_days <= 0 or not record or last_post_at is None:
+        return False
+    if not record.get('content_hash') or record.get('derived_sync_pending') is True:
+        return False
+    if record.get('source_last_post_at') != last_post_at:
+        return False
+    checked_at = record.get('source_checked_at')
+    if checked_at is None:
+        return False
+    thread_id = int(record.get('source_thread_id') or 0)
+    spread = 0.75 + 0.5 * ((thread_id % 100) / 100)
+    now = now or datetime.now(timezone.utc)
+    return now - checked_at < timedelta(days=recheck_days * spread)
+
+
+async def _mark_thread_checked(server_id: str, thread_id: int, last_post_at) -> None:
+    """Запоминает, что тема скачана и сверена: время последнего сообщения и момент проверки."""
+    try:
+        await db_manager.execute(
+            "UPDATE law_documents SET source_last_post_at = $3, source_checked_at = now() "
+            "WHERE server_id = $1 AND source_thread_id = $2",
+            server_id, thread_id, last_post_at,
+        )
+    except Exception:
+        logging.warning(f"Не удалось записать время проверки темы {thread_id} ({server_id})", exc_info=True)
 
 # A document sync holds one session-level advisory-lock connection while its
 # body uses ordinary short-lived pool connections.  Cap *all* entry points,
@@ -1055,6 +1096,7 @@ async def update_knowledge_base_for_server(server_id: str, force_update: bool = 
             deleted_docs_count = 0
             discovered_forum_thread_ids: set[int] = set()
             parsed_thread_ids: set[int] = set()
+            skipped_unchanged = 0  # темы, которые не скачивались: не менялись с прошлой проверки
             ready_thread_ids: set[int] = set()
             changed_thread_ids = set()  # доки, реально записанные в БД — кандидаты на переиндексацию law_chunks
 
@@ -1070,6 +1112,7 @@ async def update_knowledge_base_for_server(server_id: str, force_update: bool = 
 
                 # Собираем ссылки на все законы
                 all_source_urls = set()
+                discovered_activity: dict[int, int] = {}
                 for section_url in section_urls:
                     discovery = await remote_discover_section(section_url)
                     if not discovery.complete:
@@ -1081,6 +1124,7 @@ async def update_knowledge_base_for_server(server_id: str, force_update: bool = 
                         )
                         return False
                     all_source_urls.update(discovery.urls)
+                    discovered_activity.update(discovery.activity)
                     logging.info(f"  [Parser] Из раздела получено {len(discovery.urls)} ссылок")
 
                 logging.info(f"  [Parser] Всего найдено {len(all_source_urls)} уникальных ссылок на законы")
@@ -1102,7 +1146,7 @@ async def update_knowledge_base_for_server(server_id: str, force_update: bool = 
                 # Получаем текущие данные из БД
                 db_records = await db_manager.fetch(
                     "SELECT source_thread_id, source_url, title, content_hash, "
-                    "gemini_file_uri, derived_sync_pending "
+                    "gemini_file_uri, derived_sync_pending, source_last_post_at, source_checked_at "
                     "FROM law_documents WHERE server_id = $1",
                     server_id)
                 db_thread_records = {
@@ -1119,6 +1163,15 @@ async def update_knowledge_base_for_server(server_id: str, force_update: bool = 
                 thread_creators = {}
                 for thread_id_from_url, url in sorted(discovered_urls.items()):
                     try:
+                        known = db_thread_records.get(thread_id_from_url, {})
+                        if known.get('source_url') == url and can_skip_unchanged_topic(
+                            known, discovered_activity.get(thread_id_from_url), force_update
+                        ):
+                            # Тема не менялась: текст из БД остаётся, в синке она считается прочитанной.
+                            parsed_thread_ids.add(thread_id_from_url)
+                            ready_thread_ids.add(thread_id_from_url)
+                            skipped_unchanged += 1
+                            continue
                         url_override = post_overrides_map.get(thread_id_from_url, default_post_override)
                         # Используем удалённый парсер для получения контента
                         scraped_data = await remote_parse_topic(url, parse_only_author, thread_creators, post_override=url_override)
@@ -1180,6 +1233,7 @@ async def update_knowledge_base_for_server(server_id: str, force_update: bool = 
                         # Исключение выше оставит тему parsed, но не ready, и
                         # destructive cleanup будет отложен.
                         ready_thread_ids.add(thread_id)
+                        await _mark_thread_checked(server_id, thread_id, discovered_activity.get(thread_id))
                         # URI repair may be the retry after content/hash was
                         # committed but upload failed.  Reindex it as changed
                         # so the first failed attempt cannot leave stale
@@ -1486,7 +1540,8 @@ async def update_knowledge_base_for_server(server_id: str, force_update: bool = 
             logging.info(
                 f"===== СИНХРОНИЗАЦИЯ ДЛЯ {server_id} ЗАВЕРШЕНА. "
                 f"Найдено тем: {len(discovered_forum_thread_ids)}, "
-                f"успешно прочитано: {len(parsed_thread_ids)}, "
+                f"успешно прочитано: {len(parsed_thread_ids)} "
+                f"(без скачивания, не менялись: {skipped_unchanged}), "
                 f"Обновлено: {updated_docs_count}, Удалено: {deleted_docs_count}, "
                 f"Переиндексировано чанков: {reindexed_chunks}. =====")
 

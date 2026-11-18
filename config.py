@@ -309,7 +309,7 @@ QUESTION_GENERATOR_MODEL_NAME = 'smart'
 # целых кодексов файлами; модель нового поколения с ЯВНЫМ thinking; инструмент search_laws —
 # модель сама дозапрашивает недостающие нормы юридически точной формулировкой.
 # Основной пользовательский путь НЕ затронут. Выкатка на всех — после сравнения ответов.
-QA_V2_SERVER_ID = os.getenv('QA_V2_SERVER_ID', 'la_puerta')
+QA_V2_SERVER_ID = os.getenv('QA_V2_SERVER_ID', 'downtown')
 QA_V2_MODEL_NAME = os.getenv('QA_V2_MODEL_NAME', 'fast')
 # thinking_level: minimal/low/medium/high; ПУСТО = не слать thinking (аварийный откат, как
 # LOOPHOLE_THINKING_ENABLED). Было medium; поднято до high по итогам сверки 19 кейсов с
