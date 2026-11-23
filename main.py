@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 import logging
 import os
 import multiprocessing  # <<< НОВЫЙ ИМПОРТ
-from telegram import Update
+from telegram import BotCommand, MenuButtonCommands, Update
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters,
     ContextTypes, CallbackQueryHandler, TypeHandler, ApplicationHandlerStop
@@ -232,6 +232,15 @@ async def post_init(application: Application) -> None:
         logging.info("Шаг 2/5: Синхронизация серверов из конфига в БД...")
         await populate_servers_from_config()
         logging.info("Шаг 2/5: Синхронизация серверов завершена.")
+
+        # Кнопка «Меню» слева от поля ввода со списком команд бота. Ошибка Telegram API
+        # здесь не должна мешать запуску: бот работает и без меню.
+        try:
+            await application.bot.set_my_commands([BotCommand("start", "Вызывает основное меню")])
+            await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
+            logging.info("Кнопка «Меню» с командой /start установлена.")
+        except Exception:
+            logging.warning("Не удалось установить кнопку «Меню»", exc_info=True)
 
         logging.info("Шаг 3/5: Инициализация LLM-клиента...")
         from common.llm import settings as llm_settings

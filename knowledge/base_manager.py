@@ -51,17 +51,21 @@ LAW_FULL_RECHECK_DAYS = max(0.0, float(os.getenv('LAW_FULL_RECHECK_DAYS', '7')))
 def can_skip_unchanged_topic(record: dict, last_post_at, force_update: bool,
                              now: datetime | None = None,
                              recheck_days: float | None = None) -> bool:
-    """Можно ли не скачивать тему: в БД уже есть её текст, время последнего сообщения
-    в списке тем совпадает с сохранённым и полная перепроверка ещё не нужна."""
+    """Можно ли не скачивать тему: в БД уже есть её текст, последнее сообщение в теме
+    не новее нашей последней загрузки и полная перепроверка ещё не нужна.
+
+    Момент загрузки — source_checked_at, а у записей, скачанных до появления этой колонки,
+    last_updated (время последней записи текста; оно не позже реальной загрузки, так что
+    ошибка возможна только в сторону лишнего скачивания)."""
     recheck_days = LAW_FULL_RECHECK_DAYS if recheck_days is None else recheck_days
     if force_update or recheck_days <= 0 or not record or last_post_at is None:
         return False
     if not record.get('content_hash') or record.get('derived_sync_pending') is True:
         return False
-    if record.get('source_last_post_at') != last_post_at:
-        return False
-    checked_at = record.get('source_checked_at')
+    checked_at = record.get('source_checked_at') or record.get('last_updated')
     if checked_at is None:
+        return False
+    if last_post_at > checked_at.timestamp():
         return False
     thread_id = int(record.get('source_thread_id') or 0)
     spread = 0.75 + 0.5 * ((thread_id % 100) / 100)
@@ -1146,7 +1150,8 @@ async def update_knowledge_base_for_server(server_id: str, force_update: bool = 
                 # Получаем текущие данные из БД
                 db_records = await db_manager.fetch(
                     "SELECT source_thread_id, source_url, title, content_hash, "
-                    "gemini_file_uri, derived_sync_pending, source_last_post_at, source_checked_at "
+                    "gemini_file_uri, derived_sync_pending, source_last_post_at, source_checked_at, "
+                    "last_updated "
                     "FROM law_documents WHERE server_id = $1",
                     server_id)
                 db_thread_records = {
@@ -1572,6 +1577,53 @@ async def _update_server_with_semaphore(server_id: str, semaphore: asyncio.Semap
             raise RuntimeError(f"Failed to update server {server_id}")
 
 
+def server_forum_host(server_id: str) -> str:
+    """Хост форума, с которого берутся законы сервера ('' если разделы не заданы)."""
+    server_config = config.SERVERS_CONFIG.get(server_id) or {}
+    for url in server_config.get('forum_section_urls') or []:
+        return (urlsplit(url).hostname or '').lower()
+    return ''
+
+
+def group_servers_by_forum(server_ids: list[str]) -> dict[str, list[str]]:
+    """Серверы по форумам с сохранением порядка внутри форума."""
+    groups: dict[str, list[str]] = {}
+    for server_id in server_ids:
+        groups.setdefault(server_forum_host(server_id), []).append(server_id)
+    return groups
+
+
+async def update_servers_by_forum(server_ids: list[str], force_update: bool = False) -> tuple[list, list]:
+    """Обновляет серверы: разные форумы параллельно, серверы одного форума по очереди.
+
+    Параллельные синки одного форума только стояли бы в очереди парсера (на форум одна
+    загрузка за раз) и упирались в таймаут запроса, а последовательный обход всех серверов
+    заставлял форумы ждать друг друга. Возвращает (успешные, неудачные)."""
+    groups = group_servers_by_forum(server_ids)
+    logging.info(
+        "Менеджер БЗ: форумов %d, параллельно: %s",
+        len(groups), ", ".join(f"{host or '?'} ({len(ids)})" for host, ids in groups.items()),
+    )
+
+    async def run_forum(ids: list[str]) -> tuple[list, list]:
+        ok, failed = [], []
+        for server_id in ids:
+            try:
+                success = await update_knowledge_base_for_server(server_id, force_update=force_update)
+            except Exception:
+                logging.exception(f"Обновление сервера {server_id} упало")
+                success = False
+            (ok if success else failed).append(server_id)
+            logging.info(f"--- Обновление [{server_id}]: {'успешно' if success else 'ОШИБКА'} ---")
+        return ok, failed
+
+    successful, failed = [], []
+    for ok, bad in await asyncio.gather(*(run_forum(ids) for ids in groups.values())):
+        successful += ok
+        failed += bad
+    return successful, failed
+
+
 async def update_all_servers_knowledge_base(force_update: bool = False) -> tuple[int, list]:
     """
     Запускает обновление БЗ для всех активных серверов КОНКУРЕНТНО.
@@ -1585,21 +1637,7 @@ async def update_all_servers_knowledge_base(force_update: bool = False) -> tuple
         logging.warning("Менеджер БЗ: Нет активных серверов для обновления.")
         return 0, []
 
-    semaphore = asyncio.Semaphore(CONCURRENT_UPDATES)
-    logging.info(f"Лимит одновременных обновлений установлен на: {CONCURRENT_UPDATES}")
-
-    tasks = [_update_server_with_semaphore(server_id, semaphore, force_update) for server_id in enabled_servers]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    successful_servers = []
-    failed_servers = []
-    for i, result in enumerate(results):
-        server_id = enabled_servers[i]
-        if isinstance(result, Exception):
-            failed_servers.append(server_id)
-            logging.error(f"Результат глобального обновления для '{server_id}': ОШИБКА", exc_info=result)
-        else:
-            successful_servers.append(server_id)
+    successful_servers, failed_servers = await update_servers_by_forum(enabled_servers, force_update)
 
     successful_updates = len(successful_servers)
     total_servers = len(enabled_servers)

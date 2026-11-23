@@ -6,6 +6,7 @@
 """
 
 import asyncio
+from datetime import datetime
 import base64
 import logging
 import os
@@ -640,6 +641,131 @@ async def _flaresolverr_get(url: str, _no_session: bool = False) -> Optional[str
     return html
 
 
+
+# === Загрузка страниц обычным HTTP вместо браузера ===
+# GTA5RP, Россия Онлайн и RMRP отдают раздел и тему готовым HTML (с cookie xf_user для закрытых
+# разделов). Браузер на страницу тратил 4-5 с (скрипты, отрисовка, ожидания), HTTP-запрос
+# 0.5-1 с, и форум получает один запрос вместо десятков. Majestic и NOVA отвечают страницей
+# проверки браузера — им нужен браузер, обходить проверку не нужно.
+# Если форум из списка вдруг отдал не страницу форума (проверка, стена входа), он до
+# перезапуска воркера переключается на браузер.
+HTTP_FETCH_HOSTS = {
+    h.strip().lower()
+    for h in os.environ.get(
+        'HTTP_FETCH_HOSTS', 'forum.gta5rp.com,forum.russia.online,forum.rmrp.ru'
+    ).split(',')
+    if h.strip()
+}
+_http_disabled_hosts: set[str] = set()
+_http_client: Optional[httpx.AsyncClient] = None
+_BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0'
+
+
+def _use_http(url: str) -> bool:
+    host = _host_of(url)
+    return host in HTTP_FETCH_HOSTS and host not in _http_disabled_hosts
+
+
+def _get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(
+            follow_redirects=True,
+            timeout=httpx.Timeout(45.0, connect=15.0),
+            headers={
+                'User-Agent': _BROWSER_UA,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
+            },
+        )
+        for host in FORUM_COOKIE_ENVS:
+            value = _forum_cookie(host)
+            if value:
+                _http_client.cookies.set('xf_user', value, domain=host)
+    return _http_client
+
+
+async def close_http_client() -> None:
+    global _http_client
+    if _http_client is not None:
+        await _http_client.aclose()
+        _http_client = None
+
+
+def _looks_like_forum_page(html: str) -> bool:
+    """Страница XenForo с содержимым, а не проверка браузера и не стена входа."""
+    return ('p-title-value' in html or 'structItem' in html) and not _is_login_wall(html)
+
+
+async def _http_get(url: str) -> Optional[str]:
+    """HTML страницы обычным запросом. None — форум отдал не страницу форума (тогда хост
+    переключается на браузер). Сетевые ошибки и ответы блокировки идут в автостоп и
+    поднимаются исключением: повтор через браузер только сильнее нагрузил бы форум."""
+    await _host_throttle(url)
+    try:
+        response = await _get_http_client().get(url)
+    except Exception as e:
+        _breaker_failure(url, str(e).splitlines()[0][:80] if str(e) else type(e).__name__)
+        raise RuntimeError(f"HTTP-запрос {url} не удался: {e}") from e
+    if response.status_code in _BLOCK_STATUSES:
+        _breaker_failure(url, f"HTTP {response.status_code}")
+        raise RuntimeError(f"discovery page returned {response.status_code}")
+    _breaker_success(url)
+    if response.status_code != 200:
+        raise RuntimeError(f"discovery page returned {response.status_code}")
+    html = response.text
+    if not _looks_like_forum_page(html):
+        host = _host_of(url)
+        _http_disabled_hosts.add(host)
+        logging.warning(f"[HTTP] {host}: вместо страницы форума пришла проверка или стена входа, "
+                        f"дальше этот форум грузится браузером")
+        return None
+    return html
+
+
+async def _browser_get_html(url: str) -> Optional[str]:
+    """HTML страницы через браузер (фолбэк для HTTP-пути)."""
+    if not browser_context:
+        raise RuntimeError("Браузер не инициализирован")
+    async with page_semaphore:
+        stats['active_pages'] += 1
+        page = await browser_context.new_page()
+        try:
+            await _lighten_page(page, url)
+            await _goto(page, url)
+            await asyncio.sleep(2)
+            await _wait_challenge_passed(page)
+            html = await page.content()
+            if _is_login_wall(html) and _login_host(url):
+                await _login_forum(browser_context, _login_host(url))
+                await _goto(page, url)
+                await asyncio.sleep(2)
+                html = await page.content()
+            return html
+        finally:
+            try:
+                await page.close()
+            except Exception:
+                pass
+            stats['active_pages'] -= 1
+
+
+def _soup_source(url: str) -> bool:
+    """Страницы этого хоста разбираются из готового HTML (FlareSolverr или HTTP), без вкладки браузера."""
+    return _is_cf_protected(url) or _use_http(url)
+
+
+async def _html_get(url: str) -> Optional[str]:
+    """Источник HTML для разбора без вкладки: FlareSolverr, HTTP, при необходимости браузер."""
+    if _is_cf_protected(url):
+        return await _flaresolverr_get(url)
+    if _use_http(url):
+        html = await _http_get(url)
+        if html is not None:
+            return html
+    return await _browser_get_html(url)
+
+
 # --- Скачивание вложений с CF-хостов -----------------------------------------------------------
 # Cloudflare отдаёт 403 не только на страницы, но и на /attachments/*: сканы решений из судебных
 # дел не доходили до OCR. FlareSolverr выдаёт cf_clearance — с ним обычный HTTP-запрос проходит.
@@ -903,6 +1029,7 @@ async def close_browser():
         await browser.close()
     if playwright_instance:
         await playwright_instance.stop()
+    await close_http_client()
 
     logging.info("Браузер закрыт")
 
@@ -914,18 +1041,33 @@ _THREAD_ROW_ID = re.compile(r'js-threadListItem-(\d+)')
 def thread_activity_from_soup(soup) -> dict[int, int]:
     """ID темы → время последнего сообщения (unix) из списка тем раздела XenForo.
 
-    Бот по нему решает, скачивать ли тему заново: время не изменилось — тема та же."""
+    Бот по нему решает, скачивать ли тему заново. Версии XenForo пишут время по-разному:
+    data-time="1778668431" (RMRP), data-timestamp="1791126902" при data-time="18:15" (GTA5RP),
+    поэтому берётся первое, что разбирается как unix-время, затем ISO в datetime."""
     activity: dict[int, int] = {}
     for row in soup.select('div.structItem--thread'):
         m = _THREAD_ROW_ID.search(' '.join(row.get('class') or []))
-        latest = row.select_one('.structItem-cell--latest time[data-time]')
+        latest = row.select_one('.structItem-cell--latest time')
         if not m or latest is None:
             continue
-        try:
-            activity[int(m.group(1))] = int(latest.get('data-time'))
-        except (TypeError, ValueError):
-            continue
+        ts = _unix_time_of(latest)
+        if ts is not None:
+            activity[int(m.group(1))] = ts
     return activity
+
+
+def _unix_time_of(time_el) -> Optional[int]:
+    for attr in ('data-timestamp', 'data-time'):
+        raw = (time_el.get(attr) or '').strip()
+        if raw.isdigit():
+            return int(raw)
+    raw = (time_el.get('datetime') or '').strip()
+    if raw:
+        try:
+            return int(datetime.fromisoformat(raw).timestamp())
+        except ValueError:
+            return None
+    return None
 
 
 async def parse_section_urls(section_url: str, activity: Optional[dict] = None) -> list[str]:
@@ -936,6 +1078,8 @@ async def parse_section_urls(section_url: str, activity: Optional[dict] = None) 
     # CF-защищённый раздел (gta5rp) → FlareSolverr, минуя Playwright.
     if _is_cf_protected(section_url):
         return await _parse_section_flaresolverr(section_url, activity)
+    if _use_http(section_url):
+        return await _parse_section_html(section_url, activity, _html_get)
 
     if not browser_context:
         raise RuntimeError("Браузер не инициализирован")
@@ -1068,6 +1212,9 @@ async def parse_topic(url: str, parse_only_author: bool, thread_creators: dict, 
     # CF-защищённая тема (gta5rp) → FlareSolverr, минуя Playwright.
     if _is_cf_protected(url):
         return await _parse_topic_flaresolverr(url, parse_only_author, thread_creators, post_override, content_cleanup)
+    if _use_http(url):
+        return await _parse_topic_html(url, parse_only_author, thread_creators, post_override,
+                                       content_cleanup, _html_get)
 
     if not browser_context:
         raise RuntimeError("Браузер не инициализирован")
@@ -1378,9 +1525,9 @@ def _messages_from_soup(soup, page_url: str, start_order: int) -> list[dict]:
 
 
 async def _thread_page_html(url: str, page) -> Optional[str]:
-    """HTML страницы темы: FlareSolverr для CF-хостов, иначе Playwright (page переиспользуется)."""
-    if _is_cf_protected(url):
-        return await _flaresolverr_get(url)
+    """HTML страницы темы: FlareSolverr для CF-хостов, HTTP где можно, иначе Playwright."""
+    if _soup_source(url) or page is None:
+        return await _html_get(url)
     host = _login_host(url)
     relogged = False
     for attempt in range(3):
@@ -1423,10 +1570,10 @@ async def parse_thread_messages(url: str, max_pages: Optional[int] = None) -> di
     async with (_host_gate(url) or AsyncExitStack()), topic_semaphore:
         stats['active_topic_tasks'] += 1
         try:
-            # CF-путь идёт через FlareSolverr и страницу браузера не занимает.
-            async with (AsyncExitStack() if _is_cf_protected(url) else page_semaphore):
+            # CF- и HTTP-путь страницу браузера не занимают.
+            async with (AsyncExitStack() if _soup_source(url) else page_semaphore):
                 page = None
-                if not _is_cf_protected(url):
+                if not _soup_source(url):
                     if not browser_context:
                         raise RuntimeError("Браузер не инициализирован")
                     stats['active_pages'] += 1
@@ -1464,7 +1611,7 @@ async def parse_thread_messages(url: str, max_pages: Optional[int] = None) -> di
                                 break
                             current_url = urljoin(current_url, next_btn.get('href'))
                             page_num += 1
-                            if not _is_cf_protected(url):
+                            if not _soup_source(url):
                                 await asyncio.sleep(1)
                         else:
                             current_url = None
@@ -1492,9 +1639,14 @@ async def parse_thread_messages(url: str, max_pages: Optional[int] = None) -> di
 # отрендеренный DOM после решённого CF-челленджа), разбор — тем же BeautifulSoup и селекторами.
 async def _parse_section_flaresolverr(section_url: str, activity: Optional[dict] = None) -> list[str]:
     """Собирает URLs тем раздела CF-форума через FlareSolverr (аналог parse_section_urls)."""
+    return await _parse_section_html(section_url, activity, lambda u: _flaresolverr_get(u))
+
+
+async def _parse_section_html(section_url: str, activity: Optional[dict], fetch) -> list[str]:
+    """Собирает URLs тем раздела из готового HTML; fetch(url) возвращает HTML страницы."""
     async with section_semaphore:
         stats['active_section_tasks'] += 1
-        logging.info(f"  [CF Section] Парсинг через FlareSolverr: {section_url}")
+        logging.info(f"  [Section] Парсинг раздела из HTML: {section_url}")
         try:
             all_urls = set()
             current_page_url = section_url
@@ -1506,7 +1658,7 @@ async def _parse_section_flaresolverr(section_url: str, activity: Optional[dict]
                 # гонка вкладки), а не пустой раздел. Перезапрашиваем до 3 попыток, прежде чем отдать 0
                 # (иначе гард увидит 0 ссылок → ложное «массовое удаление» законов сервера).
                 for _try in range(1, 4):
-                    html = await _flaresolverr_get(current_page_url)
+                    html = await fetch(current_page_url)
                     if html:
                         soup = BeautifulSoup(html, 'html.parser')
                         elements = soup.select('div.structItem-title a')
@@ -1549,6 +1701,14 @@ async def _parse_topic_flaresolverr(url: str, parse_only_author: bool, thread_cr
                                     post_override: Optional[dict] = None,
                                     content_cleanup: Optional[bool] = None) -> Optional[dict]:
     """Парсит одну тему CF-форума через FlareSolverr (аналог parse_topic)."""
+    return await _parse_topic_html(url, parse_only_author, thread_creators, post_override,
+                                   content_cleanup, lambda u: _flaresolverr_get(u))
+
+
+async def _parse_topic_html(url: str, parse_only_author: bool, thread_creators: dict,
+                            post_override: Optional[dict], content_cleanup: Optional[bool],
+                            fetch) -> Optional[dict]:
+    """Парсит одну тему из готового HTML; fetch(url) возвращает HTML страницы."""
     thread_id = extract_thread_id_from_url(url)
     if not thread_id:
         return None
@@ -1573,7 +1733,7 @@ async def _parse_topic_flaresolverr(url: str, parse_only_author: bool, thread_cr
     async with (_host_gate(url) or AsyncExitStack()), topic_semaphore:
         stats['active_topic_tasks'] += 1
         try:
-            first_html = await _flaresolverr_get(url)
+            first_html = await fetch(url)
             if not first_html:
                 logging.warning(f"    [CF] нет HTML для темы {url}")
                 return None
@@ -1620,7 +1780,7 @@ async def _parse_topic_flaresolverr(url: str, parse_only_author: bool, thread_cr
 
             while current_url:
                 if page_num > 1:
-                    html = await _flaresolverr_get(current_url)
+                    html = await fetch(current_url)
                     if not html:
                         break
                     cur_soup = BeautifulSoup(html, 'html.parser')
