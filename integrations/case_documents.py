@@ -7,7 +7,9 @@
     Google Docs: Файл → Скачать → .docx). Без шаблона создаётся пустой документ;
   * файл кладётся в хранилище (common/storage) как case_documents/<id>.docx;
   * ссылка — подписанная, отдаётся API по /files/... (нужны PUBLIC_BASE_URL и
-    FILES_SIGNING_SECRET). Срок жизни ссылки — CCW_LINK_DAYS (по умолчанию 365 дней).
+    FILES_SIGNING_SECRET). Срок жизни ссылки — CCW_LINK_DAYS (по умолчанию 365 дней);
+  * бот отправляет файл в чат (document_bytes), ссылка — дополнительно, если она
+    публичная (is_public_url).
 
 Интерфейс прежний: create_criminal_case_document(case_number) → (doc_id, doc_url) и
 fill_criminal_case_document(doc_id, ...) → True, поэтому сценарий уголовного дела не менялся.
@@ -16,12 +18,14 @@ from __future__ import annotations
 
 import asyncio
 import io
+import ipaddress
 import logging
 import os
 import re
 import uuid
 from datetime import timedelta
 from typing import Dict, Tuple
+from urllib.parse import urlsplit
 
 from docx import Document
 from docx.shared import Pt
@@ -77,6 +81,25 @@ def _save(doc: Document, doc_id: str) -> None:
 
 def get_document_url(doc_id: str) -> str:
     return storage.signed_url(_blob_name(doc_id), timedelta(days=_link_days()))
+
+
+def document_bytes(doc_id: str) -> bytes:
+    """Содержимое .docx — чтобы отправить его файлом прямо в чат."""
+    return storage.get_bucket().blob(_blob_name(doc_id)).download_as_bytes()
+
+
+def is_public_url(url: str) -> bool:
+    """Ссылка доступна извне. Ссылки на localhost/127.0.0.1 (бот запущен локально, без
+    PUBLIC_BASE_URL) с телефона не откроются, а Telegram отклоняет кнопку с таким адресом
+    и вместе с ней всё сообщение."""
+    host = (urlsplit(url or "").hostname or "").lower()
+    if not host or host == "localhost" or host.endswith(".localhost"):
+        return False
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return "." in host
+    return not (ip.is_private or ip.is_loopback)
 
 
 async def create_criminal_case_document(case_number: str) -> Tuple[str, str]:

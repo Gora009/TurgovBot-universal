@@ -604,6 +604,8 @@ OVERLAY_ADVICE_MODEL_FAST = os.getenv('OVERLAY_ADVICE_MODEL_FAST', 'smart')   # 
 OVERLAY_ADVICE_MODEL_DEEP = 'smart'   # глубокий разбор по хоткею (из оверлея НЕ вызывается)
 OVERLAY_ADVICE_MODEL_LITE = os.getenv('OVERLAY_ADVICE_MODEL_LITE', 'fast')  # A/B-кандидат flash-lite (60 QPM)
 OVERLAY_REWRITE_MODEL = os.getenv('OVERLAY_REWRITE_MODEL', OVERLAY_ADVICE_MODEL_LITE)  # риврайтер ситуации → поисковые запросы перед ретривалом (дефолт = flash-lite; fail-open при сбое)
+# Сколько ждать риврайтер, секунд. Сверх лимита совет идёт по сырому запросу (fail-open).
+OVERLAY_REWRITE_TIMEOUT = float(os.getenv('OVERLAY_REWRITE_TIMEOUT', '5'))
 OVERLAY_RETRIEVAL_TOP_K = 14                           # сколько «семян»-чанков берём (потом догружаем статьи целиком)
 OVERLAY_REWRITE_TOPK_PER_QUERY = 6                     # семян на КАЖДЫЙ запрос риврайтера (retrieve_multi: union статей под общий потолок)
 OVERLAY_CONTEXT_MAX_CHARS = int(os.getenv('OVERLAY_CONTEXT_MAX_CHARS', '40000'))  # потолок суммарного контекста (полные статьи); 24000→40000: полнота статей при многогранной сцене, latency Gemini от объёма входа зависит слабо
@@ -658,7 +660,9 @@ COMMAND_RATE_LIMIT_SECONDS = 2
 
 
 # >>> НАЧАЛО ИЗМЕНЕНИЙ: БЛОК ДЛЯ ПОДПИСКИ <<<
-TELEGRAM_CHANNEL_URL = "https://t.me/turgovovka"  # Публичная ссылка на канал
+# Канал, подписка на который даёт бонусные запросы. Бот должен быть администратором канала,
+# иначе Telegram не отдаёт список участников и проверка подписки всегда отрицательная.
+TELEGRAM_CHANNEL_URL = os.getenv('TELEGRAM_CHANNEL_URL', 'https://t.me/turgovovka')
 # Используем username канала (@turgovovka) - он извлекается автоматически из URL
 # Числовой ID оставляем пустым, т.к. username работает надёжнее
 TELEGRAM_CHANNEL_ID = None  # Будет использован username из TELEGRAM_CHANNEL_URL

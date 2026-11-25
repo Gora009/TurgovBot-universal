@@ -332,12 +332,15 @@ def _clean_topic_title(title_el, cleanup: bool) -> str:
 
     Форматы разные: rmrp вешает префикс как span.prefix («ЗАКОНОДАТЕЛЬСТВО»), gta5rp — как
     span.label («Важно») + span.label-append с пробелом. Оба — служебные метки, а не название.
+
+    Метки снимаются всегда. Раньше это делалось только для хостов с чисткой текста
+    (CONTENT_CLEANUP_HOSTS), и у GTA5RP метка склеивалась с названием: «ВажноКонституция».
+    Название в content_hash не входит, поэтому массовой пересинхронизации это не вызывает.
+    Параметр cleanup оставлен ради совместимости вызовов.
     """
-    if cleanup:
-        for badge in title_el.select('span.prefix, span.label, span.label-append, .labelLink'):
-            badge.decompose()
-        return re.sub(r'\s+', ' ', title_el.get_text(' ', strip=True)).strip()
-    return title_el.get_text(strip=True)
+    for badge in title_el.select('span.prefix, span.label, span.label-append, .labelLink'):
+        badge.decompose()
+    return re.sub(r'\s+', ' ', title_el.get_text(' ', strip=True)).strip()
 
 
 def _post_text(content_el, cleanup: bool) -> str:

@@ -2597,7 +2597,22 @@ async def reindex_changed_documents(server_id: str, thread_ids) -> Dict[str, int
         # durable-маркера, потому что сервер ещё не имеет RAG baseline.
         stats["skipped"] += len(docs)
 
-    if has_catalog_baseline and not getattr(config, "LAW_CATALOG_AUTO_SYNC", True):
+    if not has_catalog_baseline and getattr(config, "LAW_CATALOG_AUTO_SYNC", True):
+        # Первая сборка каталога. Раньше её запускали только вручную
+        # (scripts/build_law_catalog.py), и на новой установке каталог оставался пустым:
+        # поиск статей оверлея и сайта, подборка статей помощника и /qa2 не работали.
+        # Сборка идёт без LLM-обогащения: оно долгое и платное, его запускают скриптом.
+        from services.law_catalog_service import build_catalog_for_server
+
+        try:
+            built = await build_catalog_for_server(server_id, enrich=False)
+            logger.info("[LAW_CATALOG] server=%s: первая сборка каталога %s", server_id, built)
+            if (built or {}).get("failed_documents"):
+                failed_ids.update(doc_ids)
+        except Exception:
+            logger.exception("[LAW_CATALOG] server=%s: первая сборка каталога не удалась", server_id)
+            failed_ids.update(doc_ids)
+    elif has_catalog_baseline and not getattr(config, "LAW_CATALOG_AUTO_SYNC", True):
         logger.info(
             "[LAW_CATALOG] auto-sync disabled for server=%s; %d pending docs retained",
             server_id,

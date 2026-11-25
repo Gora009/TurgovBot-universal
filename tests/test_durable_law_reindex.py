@@ -472,3 +472,32 @@ async def test_full_enrichment_marks_catalog_document_successful(monkeypatch):
 
     assert summary["succeeded_document_ids"] == [10]
     assert summary["failed_document_ids"] == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("build_result, cleared", [
+    ({"documents": 1, "articles": 5, "failed_documents": 0}, 1),
+    ({"documents": 1, "articles": 0, "failed_documents": 1}, 0),
+    (RuntimeError("parse ambiguity"), 0),
+])
+async def test_first_catalog_build_runs_when_server_has_no_catalog(monkeypatch, build_result, cleared):
+    # Новая установка: каталога у сервера ещё нет. Раньше он строился только вручную
+    # скриптом, и поиск статей оставался пустым. Теперь синк собирает его сам.
+    doc = _pending_doc()
+    db = _DerivedDb([doc], has_rag=False, has_catalog=False)
+    monkeypatch.setattr(indexing, "db_manager", db)
+    _set_flags(monkeypatch)
+    calls = []
+
+    async def build_catalog_for_server(server_id, enrich=True, **_kw):
+        calls.append((server_id, enrich))
+        if isinstance(build_result, Exception):
+            raise build_result
+        return build_result
+
+    monkeypatch.setattr(catalog, "build_catalog_for_server", build_catalog_for_server)
+
+    stats = await indexing.reindex_changed_documents("memphis", [doc["source_thread_id"]])
+
+    assert calls == [("memphis", False)]  # без LLM-обогащения
+    assert stats["pending_cleared"] == cleared

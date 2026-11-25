@@ -174,9 +174,13 @@ async def _expand_neighbors(
 
 async def _vector_leg(server_id: str, query: str, top_k: int) -> List[Dict[str, Any]]:
     """Векторная нога: retrieve() уже отдаёт статьи ЦЕЛИКОМ, отсортированные по similarity.
-    На серверах без law_chunks-эмбеддингов вернёт [] — это штатно."""
+    На серверах без law_chunks-эмбеддингов вернёт [] — это штатно. Без настроенной роли
+    EMBED нога не вызывается вовсе: запрос вектора вопроса заведомо упал бы с ошибкой."""
+    from common.llm import settings as llm_settings
     from services.retrieval_service import retrieve
 
+    if not llm_settings.endpoint("embed").configured:
+        return []
     arts = await retrieve(server_id, query, top_k=top_k)
     out: List[Dict[str, Any]] = []
     for a in arts or []:

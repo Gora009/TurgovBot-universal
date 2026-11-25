@@ -48,21 +48,25 @@ def _init_vertex() -> None:
 
 
 async def rag_servers() -> list[str]:
-    """Серверы с построенным RAG-индексом — только для них имеет смысл каталог.
+    """Серверы, у которых есть скачанные законы.
+
+    Раньше брались только серверы с law_chunks (RAG-индекс на векторах). Без настроенной
+    роли EMBED law_chunks пусты, и --all не находил ни одного сервера, хотя каталог
+    строится из law_documents и векторы ему не нужны.
 
     Свод правил (majestic_rules) исключаем: это не игровая законка, поиск по нему
     не нужен; при необходимости можно собрать явно: build_law_catalog.py majestic_rules.
     """
     import config
-    rows = await db_manager.fetch("SELECT DISTINCT server_id FROM law_chunks ORDER BY server_id")
+    rows = await db_manager.fetch("SELECT DISTINCT server_id FROM law_documents ORDER BY server_id")
     rules_ns = getattr(config, "LEADERSHIP_RULES_SERVER_ID", "majestic_rules")
     return [r["server_id"] for r in rows if r["server_id"] != rules_ns]
 
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Backfill каталога статей умного поиска")
-    parser.add_argument("servers", nargs="*", help="server_id (пусто + --all = все серверы с RAG)")
-    parser.add_argument("--all", action="store_true", help="все серверы с law_chunks (кроме свода правил)")
+    parser.add_argument("servers", nargs="*", help="server_id (пусто + --all = все серверы с законами)")
+    parser.add_argument("--all", action="store_true", help="все серверы со скачанными законами (кроме свода правил)")
     parser.add_argument("--no-enrich", action="store_true", help="без LLM-обогащения (penalty/синонимы)")
     parser.add_argument("--retitle", action="store_true",
                         help="сбросить enrich_hash статей без title — обогащение перегенерит их "

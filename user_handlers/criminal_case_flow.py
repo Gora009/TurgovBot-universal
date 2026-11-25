@@ -5,10 +5,11 @@
 - CriminalCaseManager: класс для управления сессией и 3-фазным циклом
 - ConversationHandler для пошагового создания дела
 - Карусельный UI для навигации между частями
-- Интеграция с Google Docs для экспорта
+- Экспорт дела в .docx (файл в чат, ссылка на скачивание через API)
 - Автозакрытие сессий через 48 часов
 """
 
+import asyncio
 import json
 import logging
 import re
@@ -520,18 +521,20 @@ async def view_completed_case(update: Update, context: ContextTypes.DEFAULT_TYPE
     text = f"📋 <b>Уголовное дело {case_num}</b>\n\n"
     text += f"📅 Создано: {date_str}\n"
 
-    if case_data['google_doc_url']:
-        text += f"📄 <a href=\"{case_data['google_doc_url']}\">Открыть документ</a>\n"
+    from integrations.case_documents import is_public_url
 
-    text += "\n<i>⚠️ Кнопка пересоздания — временная (для тестирования)</i>"
+    doc_url = case_data['google_doc_url']
+    public_link = bool(doc_url) and is_public_url(doc_url)
+    if public_link:
+        text += f"📄 <a href=\"{doc_url}\">Скачать документ</a>\n"
 
     keyboard = []
 
-    if case_data['google_doc_url']:
-        keyboard.append([InlineKeyboardButton("🔗 Открыть документ", url=case_data['google_doc_url'])])
+    if public_link:
+        keyboard.append([InlineKeyboardButton("🔗 Скачать документ", url=doc_url)])
 
-    # Временная кнопка пересоздания документа
-    keyboard.append([InlineKeyboardButton("🔄 Пересоздать документ (ТЕСТ)", callback_data=f"ccw_recreate_doc_{session_id}")])
+    # Собирает .docx заново из сохранённых частей и отправляет файлом в чат
+    keyboard.append([InlineKeyboardButton("📄 Получить файл документа", callback_data=f"ccw_recreate_doc_{session_id}")])
     keyboard.append([InlineKeyboardButton("◀️ К списку дел", callback_data="ccw_history_list")])
     keyboard.append([InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")])
 
@@ -543,6 +546,35 @@ async def view_completed_case(update: Update, context: ContextTypes.DEFAULT_TYPE
         disable_web_page_preview=True
     )
     return CCW_NAVIGATE
+
+
+async def _deliver_case_document(query, context: ContextTypes.DEFAULT_TYPE, doc_id: str, doc_url: str,
+                                 case_number: str, header: str, buttons: list) -> None:
+    """Отправляет .docx дела файлом в чат и обновляет сообщение со статусом.
+
+    Ссылка на скачивание идёт кнопкой только если адрес публичный: при локальном запуске
+    PUBLIC_BASE_URL указывает на 127.0.0.1, такая ссылка с телефона не откроется, а
+    Telegram отклоняет кнопку с ней вместе со всем сообщением."""
+    from integrations.case_documents import document_bytes, is_public_url
+
+    data = await asyncio.to_thread(document_bytes, doc_id)
+    await context.bot.send_document(
+        chat_id=query.message.chat_id,
+        document=data,
+        filename=f"Уголовное дело {case_number}.docx",
+        caption=f"Уголовное дело №{case_number}",
+    )
+    text = f"{header}\n\n📋 Уголовное дело: <b>{case_number}</b>\n📎 Файл .docx отправлен выше."
+    keyboard = list(buttons)
+    if is_public_url(doc_url):
+        text += f"\n🔗 <a href=\"{doc_url}\">Ссылка на скачивание</a>"
+        keyboard.insert(0, [InlineKeyboardButton("🔗 Скачать документ", url=doc_url)])
+    text += "\n\n⚠️ <b>Важно:</b> проверьте документ и при необходимости отредактируйте его в Word."
+    await safe_edit_message_text(
+        query, text, parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        disable_web_page_preview=True,
+    )
 
 
 async def recreate_document(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -561,10 +593,6 @@ async def recreate_document(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     try:
         from integrations.case_documents import create_criminal_case_document, fill_criminal_case_document
-
-        # ТЕСТ: Принудительно очищаем кэш шаблона для свежего анализа
-        await db_manager.execute("DELETE FROM system_cache WHERE key = 'ccw_template_structure'")
-        logging.info("[CCW] Кэш структуры шаблона очищен для тестирования")
 
         manager = CriminalCaseManager(session_id)
         session_data = await manager.load_session_data()
@@ -593,18 +621,13 @@ async def recreate_document(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             google_doc_url=doc_url
         )
 
-        await safe_edit_message_text(
-            query,
-            f"✅ <b>Документ пересоздан!</b>\n\n"
-            f"📋 Дело: <b>{case_number}</b>\n"
-            f"🔗 <a href=\"{doc_url}\">Открыть документ</a>",
-            parse_mode='HTML',
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔗 Открыть документ", url=doc_url)],
+        await _deliver_case_document(
+            query, context, doc_id, doc_url, case_number,
+            header="✅ <b>Документ пересоздан!</b>",
+            buttons=[
                 [InlineKeyboardButton("◀️ К списку дел", callback_data="ccw_history_list")],
-                [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
-            ]),
-            disable_web_page_preview=True
+                [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")],
+            ],
         )
 
     except Exception as e:
@@ -1594,18 +1617,10 @@ async def handle_export(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
             status='completed'
         )
 
-        await safe_edit_message_text(
-            query,
-            f"✅ <b>Документ успешно создан!</b>\n\n"
-            f"📋 Уголовное дело: <b>{case_number}</b>\n"
-            f"🔗 <a href=\"{doc_url}\">Открыть документ</a>\n\n"
-            f"<i>Документ доступен по ссылке для всех с правами на просмотр.</i>\n\n"
-            f"⚠️ <b>Важно:</b> Проверьте документ и при необходимости отредактируйте в Google Docs.",
-            parse_mode='HTML',
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔗 Открыть документ", url=doc_url)],
-                [InlineKeyboardButton("◀️ Главное меню", callback_data="main_menu")]
-            ])
+        await _deliver_case_document(
+            query, context, doc_id, doc_url, case_number,
+            header="✅ <b>Документ успешно создан!</b>",
+            buttons=[[InlineKeyboardButton("◀️ Главное меню", callback_data="main_menu")]],
         )
 
         return ConversationHandler.END

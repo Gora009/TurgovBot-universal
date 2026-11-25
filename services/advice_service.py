@@ -428,7 +428,8 @@ def _pick_fast_model(model_tier: Optional[str]) -> str:
 async def rewrite_queries(situation: str, history: Optional[str]) -> List[str]:
     """Нормализатор запроса (5.2): шумный транскрипт + история → 1–4 юридических поисковых запроса.
 
-    flash-lite (config.OVERLAY_REWRITE_MODEL), строгий JSON, max_retries=1, общий таймаут 3с.
+    flash-lite (config.OVERLAY_REWRITE_MODEL), строгий JSON, max_retries=1, общий таймаут
+    OVERLAY_REWRITE_TIMEOUT (5с: DeepSeek и другие API отвечают 1.3-3с, 3с обрывали почти каждый вызов).
     Fail-open: ЛЮБАЯ ошибка/таймаут/пусто → [] — совет НЕ должен зависеть от риврайтера
     (вызывающий при [] ретривалит по сырой ситуации, как раньше).
     """
@@ -478,14 +479,14 @@ async def rewrite_queries(situation: str, history: Optional[str]) -> List[str]:
                 func=_call, model_name=model,
                 priority=RequestPriority.HIGH, max_retries=1,
             ),
-            timeout=3.0,
+            timeout=config.OVERLAY_REWRITE_TIMEOUT,
         )
         raw = (getattr(resp, "text", "") or "").strip()
         parsed = json.loads(raw) if raw else {}
         queries = [q.strip() for q in (parsed.get("queries") or []) if isinstance(q, str) and q.strip()]
         return queries[:4]
     except Exception as e:
-        logger.warning("[ADVICE] риврайтер запросов недоступен (fail-open → сырой запрос): %s", e)
+        logger.warning("[ADVICE] риврайтер запросов недоступен (fail-open → сырой запрос): %s: %s", type(e).__name__, e)
         return []
 
 

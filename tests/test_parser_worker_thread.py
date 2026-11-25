@@ -89,6 +89,15 @@ def test_xenforo_label_badge_stripped_from_title():
     assert worker._clean_topic_title(title_el, True) == "Регламент подачи обращений"
 
 
+def test_label_stripped_from_law_title_without_content_cleanup():
+    # Законы GTA5RP парсятся без чистки текста (cleanup=False); метка «Важно» раньше
+    # склеивалась с названием: «ВажноКонституция Штата Сан-Андреас».
+    html = ('<h1 class="p-title-value"><span class="label label--red">Важно</span>'
+            '<span class="label-append">&nbsp;</span>Конституция Штата Сан-Андреас</h1>')
+    title_el = BeautifulSoup(html, "html.parser").select_one("h1.p-title-value")
+    assert worker._clean_topic_title(title_el, False) == "Конституция Штата Сан-Андреас"
+
+
 def test_worker_payload_converts_to_case(monkeypatch):
     async def fake_remote(url, max_pages=None):
         return {

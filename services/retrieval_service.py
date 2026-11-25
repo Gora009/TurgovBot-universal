@@ -137,6 +137,52 @@ async def _assemble(
     return results
 
 
+def _embeddings_available() -> bool:
+    """Настроена ли роль EMBED. Без неё векторного индекса нет (law_chunks пусты), а
+    запрос вектора вопроса заведомо падает."""
+    from common.llm import settings as llm_settings
+    return llm_settings.endpoint("embed").configured
+
+
+async def _catalog_fallback(server_id, queries: List[str], limit: int) -> List[Dict[str, Any]]:
+    """Поиск по каталогу статей (полнотекстовый, без векторов) в формате retrieve().
+
+    Без роли EMBED советы оверлея и прочие векторные пути получали пустую подборку и
+    отвечали «не нашёл релевантных норм». Каталог строится из скачанных законов и векторов
+    не требует. similarity=None: оценка близости есть только у векторного поиска."""
+    from services.qa_context import _catalog_leg
+
+    server_ids = [server_id] if isinstance(server_id, str) else list(server_id)
+    out: List[Dict[str, Any]] = []
+    seen = set()
+    total = 0
+    max_chars = getattr(config, "OVERLAY_CONTEXT_MAX_CHARS", 0) or 0
+    for sid in server_ids:
+        for q in queries:
+            try:
+                articles = await _catalog_leg(sid, q, limit)
+            except Exception as e:
+                logger.warning("[RETRIEVAL] поиск по каталогу упал server=%s: %s", sid, e)
+                continue
+            for a in articles:
+                if a["key"] in seen:
+                    continue
+                if max_chars and out and total + len(a["text"]) > max_chars:
+                    return out
+                seen.add(a["key"])
+                total += len(a["text"])
+                out.append({
+                    "law_document_id": a["key"][0],
+                    "title": a["doc_title"],
+                    "article_ref": a["article_ref"] or a["title"],
+                    "content": a["text"],
+                    "similarity": None,
+                })
+    if not out:
+        logger.info("[RETRIEVAL] каталог ничего не нашёл server=%s (роль EMBED не настроена)", server_ids)
+    return out
+
+
 async def retrieve(
     server_id,   # str | List[str] — один namespace законки или несколько (слои свода «Обзвона»)
     query_text: str,
@@ -159,6 +205,8 @@ async def retrieve(
     q = (query_text or "").strip()
     if not q:
         return []
+    if not _embeddings_available():
+        return await _catalog_fallback(server_id, [q], top_k)
 
     # Эмбеддинг запроса с высоким приоритетом (горячий путь, ждёт пользователь).
     qvec = await embed_one(q, task_type=TASK_QUERY, priority=RequestPriority.HIGH)
@@ -199,6 +247,8 @@ async def retrieve_multi(
     qs = [q for q in ((q or "").strip() for q in (queries or [])) if q]
     if not qs:
         return []
+    if not _embeddings_available():
+        return await _catalog_fallback(server_id, qs, top_k)
 
     # ОДИН батч-эмбеддинг всех запросов (горячий путь, ждёт пользователь).
     vecs = await embed_texts(qs, task_type=TASK_QUERY, priority=RequestPriority.HIGH)
