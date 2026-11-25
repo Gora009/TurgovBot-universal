@@ -348,7 +348,7 @@ _LOOPHOLE_FLASH = 'smart'
 # с нормальной прод-квотой. ⚠️ у 3.5-flash дефолтный thinking=MEDIUM → на тяжёлых
 # стадиях ОБЯЗАТЕЛЬНО ставить thinking_level="high" явно (иначе анализ тихо просядет).
 # Имя _LOOPHOLE_PRO оставлено историческим, чтобы не трогать ссылки deep/expert.
-_LOOPHOLE_PRO = 'smart'
+_LOOPHOLE_PRO = 'deep'   # роль сложных задач; не задана — берётся smart
 
 # fast
 LOOPHOLE_ROUTER_MODEL_FAST = _LOOPHOLE_FLASH_LITE
@@ -601,7 +601,7 @@ LAW_SEARCH_LOG_SHUTDOWN_TIMEOUT = max(
 
 # --- Голосовой оверлей: советник (Фаза 2) ---
 OVERLAY_ADVICE_MODEL_FAST = os.getenv('OVERLAY_ADVICE_MODEL_FAST', 'smart')   # быстрый совет (стрим); ENV-override для A/B flash↔flash-lite-preview
-OVERLAY_ADVICE_MODEL_DEEP = 'smart'   # глубокий разбор по хоткею (из оверлея НЕ вызывается)
+OVERLAY_ADVICE_MODEL_DEEP = 'deep'   # глубокий разбор по хоткею (из оверлея НЕ вызывается)
 OVERLAY_ADVICE_MODEL_LITE = os.getenv('OVERLAY_ADVICE_MODEL_LITE', 'fast')  # A/B-кандидат flash-lite (60 QPM)
 OVERLAY_REWRITE_MODEL = os.getenv('OVERLAY_REWRITE_MODEL', OVERLAY_ADVICE_MODEL_LITE)  # риврайтер ситуации → поисковые запросы перед ретривалом (дефолт = flash-lite; fail-open при сбое)
 # Сколько ждать риврайтер, секунд. Сверх лимита совет идёт по сырому запросу (fail-open).

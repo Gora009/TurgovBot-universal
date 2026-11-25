@@ -55,8 +55,13 @@ _FINISH = {
 # Выбор роли (поставщика) по имени модели
 # ---------------------------------------------------------------------------
 
+# Уровни размышления Gemini → reasoning_effort. "minimal" у OpenAI-совместимых API нет
+# (DeepSeek V4 принимает low/medium/high/max), ближайший — low.
+_REASONING_EFFORT = {"minimal": "low", "thinking_level_unspecified": "medium"}
+
+
 def role_for_model(model: Optional[str]) -> str:
-    """Имя модели в коде бота — это роль ('fast', 'smart', 'vision', 'embed').
+    """Имя модели в коде бота — это роль ('fast', 'smart', 'deep', 'vision', 'embed').
 
     Старые имена Gemini тоже понимаем (на случай, если их задали через env):
     *lite* → fast, *embedding* → embed, остальное → smart.
@@ -363,11 +368,11 @@ def build_payload(model_name: str, contents: Any, config: Any, documents: Dict[s
         payload["tools"] = tools
 
     thinking = _cfg(config, "thinking_config")
-    if thinking is not None and settings.send_reasoning_effort():
+    if thinking is not None and settings.send_reasoning_effort(role):
         level = getattr(thinking, "thinking_level", None)
         level = getattr(level, "value", level)
         if level:
-            payload["reasoning_effort"] = str(level).lower()
+            payload["reasoning_effort"] = _REASONING_EFFORT.get(str(level).lower(), str(level).lower())
 
     return role, payload
 

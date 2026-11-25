@@ -7,6 +7,8 @@
 
     fast    быстрые служебные вызовы: роутеры законов, оптимизатор вопроса, сводки
     smart   основные ответы: консультант, помощник, документы, анализ жалоб
+    deep    сложные задачи: анализатор пробелов в законах (deep/expert), глубокий разбор
+            оверлея. Обычно модель с рассуждением (deepseek-v4-pro); не задана — берётся smart
     vision  запросы с картинками (OCR паспорта, скриншоты из дел); DeepSeek картинки
             не принимает, поэтому сюда обычно ставят другую модель/поставщика
     embed   векторы для RAG (/embeddings)
@@ -27,11 +29,12 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Optional
 
-ROLES = ("fast", "smart", "vision", "embed", "stt")
+ROLES = ("fast", "smart", "deep", "vision", "embed", "stt")
 
 # Значение по умолчанию для модели роли, если LLM_<ROLE>_MODEL не задана.
 _MODEL_FALLBACK = {
     "fast": "smart",      # нет отдельной быстрой модели — берём основную
+    "deep": "smart",      # нет отдельной модели для сложных задач — берём основную
     "vision": "smart",    # основная модель должна уметь картинки, иначе задайте LLM_VISION_*
 }
 
@@ -105,9 +108,15 @@ def json_mode() -> str:
     return mode if mode in ("json_object", "json_schema", "prompt") else "json_object"
 
 
-def send_reasoning_effort() -> bool:
-    """Передавать ли thinking_level как reasoning_effort (OpenAI o-серия, gpt-5, часть
-    OpenRouter-моделей). По умолчанию выключено: многие API отвечают 400 на неизвестное поле."""
+def send_reasoning_effort(role: Optional[str] = None) -> bool:
+    """Передавать ли thinking_level как reasoning_effort (DeepSeek V4, OpenAI o-серия, gpt-5,
+    часть OpenRouter-моделей). По умолчанию выключено: многие API отвечают 400 на неизвестное
+    поле. LLM_<РОЛЬ>_SEND_REASONING_EFFORT переопределяет общий флаг для роли: например,
+    включить рассуждение для deep и оставить быструю роль без него."""
+    if role:
+        raw = _env(f"LLM_{role.upper()}_SEND_REASONING_EFFORT")
+        if raw:
+            return raw.lower() in ("1", "true", "yes")
     return _env("LLM_SEND_REASONING_EFFORT", "false").lower() in ("1", "true", "yes")
 
 

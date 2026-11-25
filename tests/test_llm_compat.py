@@ -278,3 +278,43 @@ async def test_real_service_runs_through_adapter():
     assert url == "https://api.example.com/v1/chat/completions"
     assert body["model"] == "big-model"
     assert "угнал мою машину" in json.dumps(body, ensure_ascii=False)
+
+
+# --- Роль deep и уровень размышления -----------------------------------------
+
+async def test_deep_falls_back_to_smart():
+    rec = install(lambda req, body: chat_reply("ok"))
+    await client.aio.models.generate_content(model="deep", contents="x")
+    assert rec.requests[0][2]["model"] == "big-model"
+
+
+async def test_deep_uses_own_model(monkeypatch):
+    monkeypatch.setenv("LLM_DEEP_MODEL", "reasoner")
+    settings.reset_cache()
+    rec = install(lambda req, body: chat_reply("ok"))
+    await client.aio.models.generate_content(model="deep", contents="x")
+    assert rec.requests[0][2]["model"] == "reasoner"
+
+
+def _thinking(level):
+    return types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_level=level))
+
+
+@pytest.mark.parametrize("level, expected", [("minimal", "low"), ("low", "low"), ("high", "high")])
+async def test_reasoning_effort_sent_when_enabled(monkeypatch, level, expected):
+    monkeypatch.setenv("LLM_SEND_REASONING_EFFORT", "true")
+    rec = install(lambda req, body: chat_reply("ok"))
+    await client.aio.models.generate_content(model="smart", contents="x", config=_thinking(level))
+    assert rec.requests[0][2]["reasoning_effort"] == expected
+
+
+async def test_reasoning_effort_per_role_override(monkeypatch):
+    # Рассуждение только для deep: быстрая роль идёт без него (не тратит время на мысли).
+    monkeypatch.setenv("LLM_DEEP_MODEL", "reasoner")
+    monkeypatch.setenv("LLM_DEEP_SEND_REASONING_EFFORT", "true")
+    settings.reset_cache()
+    rec = install(lambda req, body: chat_reply("ok"))
+    await client.aio.models.generate_content(model="deep", contents="x", config=_thinking("high"))
+    await client.aio.models.generate_content(model="fast", contents="x", config=_thinking("high"))
+    assert rec.requests[0][2]["reasoning_effort"] == "high"
+    assert "reasoning_effort" not in rec.requests[1][2]

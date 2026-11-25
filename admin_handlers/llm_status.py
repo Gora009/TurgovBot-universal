@@ -12,6 +12,7 @@ from common.llm import settings as llm_settings
 _ROLE_TITLES = {
     "fast": "Быстрая (роутеры, сводки)",
     "smart": "Основная (ответы, документы)",
+    "deep": "Сложные задачи (анализ законов, глубокий разбор)",
     "vision": "Картинки (OCR)",
     "embed": "Векторы (RAG)",
     "stt": "Распознавание речи",
